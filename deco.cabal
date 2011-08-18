@@ -14,7 +14,6 @@ Executable deco
                      Lexer
   Build-Depends:
     base >= 3 && < 5,
-    mtl >= 2 && < 3,
     transformers >= 0.2 && < 2,
     haskeline >= 0.6 && < 2,
     parsec >= 3 && < 4

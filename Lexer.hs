@@ -3,8 +3,8 @@ module Lexer where
 import qualified Text.Parsec.Token as P
 import Text.Parsec.Token (GenLanguageDef(..))
 
-import Text.Parsec.Char
-import Text.Parsec.String
+import Text.Parsec.String (Parser)
+import Text.Parsec.Char (oneOf, letter, alphaNum)
 
 opChar :: Parser Char
 opChar = oneOf ":!#$%&*+./<=>?@\\^|-~"
@@ -30,3 +30,4 @@ whiteSpace = P.whiteSpace lexer
 parens     = P.parens lexer
 identifier = P.identifier lexer
 integer    = P.integer lexer
+reservedOp = P.reservedOp lexer
