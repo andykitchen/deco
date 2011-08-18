@@ -10,43 +10,36 @@ import Control.Monad.IO.Class
 
 import System.Console.Haskeline
 
-data Sexp = Cons [Sexp] | Sym String | Num Int
+import Lexer
+
+data Sexp = Cons [Sexp] | Sym String | Num Integer
   deriving Show
 
-symbol :: Parser Sexp
-symbol = (many1 rune >>= return . Sym) <?> "Intentifier"
-
-rune :: Parser Char
-rune = alphaNum <|> oneOf "!#$%&|*+-/:&lt;=>?@^_~."
-
-number :: Parser Sexp
-number = try rule <?> "Number"
-  where rule = do
-          str <- many1 digit
-          notFollowedBy rune
-          return $ Num (read str)
+asNum  = return . Num
+asSym  = return . Sym
+asCons = return . Cons
 
 atom :: Parser Sexp
-atom = number <|> symbol
+atom = (integer >>= asNum) <|> (identifier >>= asSym)
 
 sexp :: Parser Sexp
-sexp = do
-    char '('
-    xs <- sepBy1 sexp ws
-    char ')'
-    return $ Cons xs
-  <|> atom
-
-ws = many1 space
+sexp = parens (many sexp >>= asCons) <|> atom
 
 parseInput :: MonadIO m => String -> InputT m ()
 parseInput = parseInput' sexp
 
+parse' p = parse $
+  do
+    whiteSpace
+    x <- p
+    eof
+    return x
+
 parseInput' p input
-    = case parse p "" input of
+    = case parse' p "<stdin>" input of
         Left err -> do printOutput "parse error"
                        printOutput err
-        Right x  -> printOutput (show x)
+        Right x  -> printOutput x
 
 printOutput :: (MonadIO m, Show a) => a -> InputT m ()
 printOutput = outputStrLn . show
