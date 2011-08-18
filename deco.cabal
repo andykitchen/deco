@@ -7,8 +7,10 @@ Author:              Andy Kitchen
 Maintainer:          kitchen.andy@gmail.com
 Build-Type:          Simple
 Cabal-Version:       >= 1.2
+
 Executable deco
   Main-is:           Main.hs
+  Other-Modules:     Parser
   Build-Depends:
     base >= 3 && < 5,
     mtl >= 2 && < 3,
