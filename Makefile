@@ -5,7 +5,7 @@ all: deco
 deco: dist/setup-config
 	cabal build
 
-dist/setup-config:
+dist/setup-config: deco.cabal
 	cabal configure
 
 run:
