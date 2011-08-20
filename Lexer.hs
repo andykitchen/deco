@@ -7,7 +7,7 @@ import Text.Parsec.String (Parser)
 import Text.Parsec.Char (oneOf, letter, alphaNum)
 
 opChar :: Parser Char
-opChar = oneOf ":!#$%&*+./<=>?@\\^|-~"
+opChar = oneOf ",:;!#$%&*+./<=>?@\\^|-~="
 
 language = LanguageDef {
     commentStart = "",
@@ -18,8 +18,10 @@ language = LanguageDef {
     identLetter = alphaNum,
     opStart = opChar,
     opLetter = opChar,
-    reservedNames = [],
-    reservedOpNames = [],
+    reservedNames = ["if"],
+    reservedOpNames =
+      ["+", "-", "*", "/", "++", "--",
+       "!", "<", ">", "<=", ">=", "==", "!=", "="],
     caseSensitive = True
 }
 
@@ -28,6 +30,11 @@ lexer = P.makeTokenParser language
 
 whiteSpace = P.whiteSpace lexer
 parens     = P.parens lexer
+braces     = P.braces lexer
+semi       = P.semi lexer
 identifier = P.identifier lexer
-integer    = P.integer lexer
+symbol     = P.symbol lexer
+integer    = P.natural lexer
+reserved   = P.reserved lexer
 reservedOp = P.reservedOp lexer
+stringLiteral = P.stringLiteral lexer
