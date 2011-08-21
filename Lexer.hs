@@ -18,7 +18,7 @@ language = LanguageDef {
     identLetter = alphaNum,
     opStart = opChar,
     opLetter = opChar,
-    reservedNames = ["if"],
+    reservedNames = ["if", "else"],
     reservedOpNames =
       ["+", "-", "*", "/", "++", "--",
        "!", "<", ">", "<=", ">=", "==", "!=", "="],

@@ -1,7 +1,7 @@
 module Parser (parseInput) where
 
 import Text.Parsec ((<|>), (<?>), try, eof, many1)
-import Text.Parsec.Combinator (optional, sepBy, sepEndBy1)
+import Text.Parsec.Combinator (optional, optionMaybe, sepBy, sepEndBy1)
 import Text.Parsec.Prim (parse)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Expr (buildExpressionParser, Operator(..), Assoc(..))
@@ -20,7 +20,7 @@ data Expr = BinOp String Expr Expr
           | Lambda [String] Expr
           | Application Expr [Expr]
           | Multi [Expr]
-          | If Expr Expr
+          | If Expr Expr (Maybe Expr)
   deriving Show
 
 expr        :: Parser Expr
@@ -82,9 +82,10 @@ multi = braces $ sepEndBy1 expr semi >>= asMulti
 
 if' = do
   reserved "if"
-  e <- expr
-  m <- multi
-  return (If e m)
+  test  <- expr
+  then' <- multi
+  else' <- optionMaybe (reserved "else" >> multi)
+  return (If test then' else')
 
 
 parseInput :: MonadIO m => String -> InputT m ()
