@@ -8,7 +8,7 @@ import Text.Parsec.Expr (buildExpressionParser, Operator(..), Assoc(..))
 
 import Control.Monad.IO.Class (MonadIO)
 
-import System.Console.Haskeline
+import System.Console.Haskeline (InputT, outputStrLn)
 
 import Lexer
 
