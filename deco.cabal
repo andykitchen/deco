@@ -13,8 +13,10 @@ Executable deco
   Other-Modules:     Parser,
                      Lexer,
                      Evaluate
+  Extensions:        FlexibleInstances
   Build-Depends:
     base >= 3 && < 5,
+    containers >= 0.4 && < 2,
     transformers >= 0.2 && < 2,
     haskeline >= 0.6 && < 2,
     parsec >= 3 && < 4

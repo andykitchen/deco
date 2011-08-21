@@ -12,5 +12,8 @@ repl :: InputT IO ()
 repl = do
   input <- getInputLine "> "
   case input of
-     Nothing   -> return ()
-     Just line -> parseInput line >> repl
+    Nothing   -> return ()
+    Just line -> do
+      ast <- parseInput line
+      (outputStrLn . show . evaluate) ast
+      repl

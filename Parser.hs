@@ -1,4 +1,4 @@
-module Parser (parseInput) where
+module Parser (parseInput, Expr(..)) where
 
 import Text.Parsec ((<|>), (<?>), try, eof, many1)
 import Text.Parsec.Combinator (optional, optionMaybe, sepBy, sepEndBy1)
@@ -58,8 +58,8 @@ exprRule name f  =  reservedOp name >> return (f name)
 primary  =  try application
         <|> parens expr
         <|> multi
-        <|> (stringLiteral >>= asStrLit)
         <|> if'
+        <|> (stringLiteral >>= asStrLit)
         <|> (identifier >>= asIdent)
         <|> (integer >>= asIntLit)
         <|> lambda
@@ -88,7 +88,7 @@ if' = do
   return (If test then' else')
 
 
-parseInput :: MonadIO m => String -> InputT m ()
+parseInput :: MonadIO m => String -> InputT m Expr
 parseInput = parseInput' expr
 
 parse' p = parse $
@@ -98,12 +98,13 @@ parse' p = parse $
     eof
     return x
 
-parseInput' :: (MonadIO m, Show a) => Parser a -> String -> InputT m ()
+parseInput' :: (MonadIO m) => Parser Expr -> String -> InputT m Expr
 parseInput' p input
     = case parse' p "<stdin>" input of
         Left err -> do outputStrLn "parse error"
                        printOutput err
-        Right x  -> printOutput x
+                       return (IntLit 0)
+        Right ast -> printOutput ast >> return ast
 
 printOutput :: (MonadIO m, Show a) => a -> InputT m ()
 printOutput = outputStrLn . show
