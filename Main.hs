@@ -3,7 +3,7 @@ module Main (main) where
 import System.Console.Haskeline
 
 import Parser
-
+import Evaluate
 
 main :: IO ()
 main = runInputT defaultSettings repl
