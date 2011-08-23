@@ -2,9 +2,9 @@
 module Evaluate(evaluateIO, Bindings, defaultBindings) where
 
 import Control.Monad (liftM)
-import Control.Monad.Trans.State
+import Control.Monad.Trans.State(StateT, get, put, runStateT)
 import Control.Monad.IO.Class (MonadIO)
-import Data.Map
+import Data.Map (Map, fromList, insert, findWithDefault)
 
 import Parser
 
