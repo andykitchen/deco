@@ -78,7 +78,7 @@ application = do
   args <- parens argList
   return (Application func args)
 
-multi = braces $ sepEndBy1 expr semi >>= asMulti
+multi = braces (sepEndBy1 expr semi >>= asMulti)
 
 if' = do
   reserved "if"
