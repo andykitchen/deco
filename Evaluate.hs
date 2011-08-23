@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 module Evaluate(evaluateIO, Bindings, defaultBindings) where
 
+import Control.Monad (liftM)
 import Control.Monad.Trans.State
 import Control.Monad.IO.Class (MonadIO)
 import Data.Map
@@ -62,4 +63,6 @@ evaluate (BinOp op l r) = do
          case var of
               PrimFun f -> return (f [lhs, rhs])
 
-evaluate _ = return (IntVal 0)
+evaluate (Multi exps) = (liftM last . mapM evaluate) exps
+
+evaluate _ = return Undefined
