@@ -1,8 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
-module Evaluate(evaluateIO, Bindings, defaultBindings) where
+module Evaluate(ProgramEnv, evaluate, runProgram, defaultBindings) where
 
 import Control.Monad (liftM)
-import Control.Monad.Trans.State(StateT, get, put, runStateT)
+import Control.Monad.Trans.State(StateT, get, put, runStateT, evalStateT)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Map (Map, fromList, insert, findWithDefault)
 
@@ -11,6 +11,7 @@ import Parser
 data Value = IntVal Integer
            | StrVal String
            | PrimFun ([Value] -> Value)
+           | Undefined
   deriving (Show, Eq)
 
 instance Show ([Value] -> Value) where
@@ -35,13 +36,17 @@ defaultBindings = fromList [("+", primLift (+)),
 binding :: String -> ProgramEnv Value
 binding str = do
         bindings <- get
-        return (bindings ! str)
+        let val = findWithDefault Undefined str bindings
+        return val
 
 rebind :: String -> Value -> ProgramEnv Value
 rebind str val = do
        bindings <- get
        put (insert str val bindings)
        return val
+
+runProgram :: Bindings -> ProgramEnv () -> IO ()
+runProgram = flip evalStateT
 
 evaluateIO :: Expr -> Bindings -> IO (Value, Bindings)
 evaluateIO exp env = runStateT (evaluate exp) env

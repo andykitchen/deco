@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Control.Monad.Trans.Class (lift)
 import Control.Monad.IO.Class (liftIO)
 
 import System.Console.Haskeline
@@ -8,17 +9,19 @@ import Parser
 import Evaluate
 
 main :: IO ()
-main = runInputT defaultSettings (repl defaultBindings)
+main = (runProgram defaultBindings . runInputT defaultSettings) repl
 
-repl :: Bindings -> InputT IO ()
-repl env = do
+repl :: InputT ProgramEnv ()
+repl = do
   input <- getInputLine "> "
   case input of
     Nothing   -> return ()
     Just line -> do
-      ast  <- parseInput line
-      env' <- liftIO $ do
-        (value, env') <- evaluateIO ast env
-        print value
-        return env'
-      repl env'
+      ast   <- parse' line
+      value <- evaluate' ast
+      print' value
+      repl
+
+evaluate' = lift   . evaluate
+print'    = liftIO . print
+parse'    = liftIO . parseStr

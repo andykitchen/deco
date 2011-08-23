@@ -1,4 +1,4 @@
-module Parser (parseInput, Expr(..)) where
+module Parser (parseStr, Expr(..)) where
 
 import Text.Parsec ((<|>), (<?>), try, eof, many1)
 import Text.Parsec.Combinator (optional, optionMaybe, sepBy, sepEndBy1)
@@ -6,9 +6,7 @@ import Text.Parsec.Prim (parse)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Expr (buildExpressionParser, Operator(..), Assoc(..))
 
-import Control.Monad.IO.Class (MonadIO)
-
-import System.Console.Haskeline (InputT, outputStrLn)
+import Control.Monad.IO.Class (MonadIO, liftIO)
 
 import Lexer
 
@@ -48,7 +46,8 @@ table   = [[prefix "-"],
             prefix "!"],
            [binary "=" AssocRight]]
 
-binary  name = Infix   (exprRule name BinOp)
+binary  name assoc = Infix  (exprRule name BinOp) assoc
+
 prefix  name = Prefix  (exprRule name UniOp)
 postfix name = Postfix (exprRule name UniOp)
 
@@ -87,24 +86,19 @@ if' = do
   else' <- optionMaybe (reserved "else" >> multi)
   return (If test then' else')
 
-
-parseInput :: MonadIO m => String -> InputT m Expr
-parseInput = parseInput' expr
-
-parse' p = parse $
-  do
+program = do
     whiteSpace
-    x <- p
+    x <- expr
     eof
     return x
 
-parseInput' :: (MonadIO m) => Parser Expr -> String -> InputT m Expr
-parseInput' p input
-    = case parse' p "<stdin>" input of
-        Left err -> do outputStrLn "parse error"
-                       printOutput err
-                       return (IntLit 0)
-        Right ast -> printOutput ast >> return ast
+parseStr :: String -> IO Expr
+parseStr = parseStr' program
 
-printOutput :: (MonadIO m, Show a) => a -> InputT m ()
-printOutput = outputStrLn . show
+parseStr' :: Parser Expr -> String -> IO Expr
+parseStr' p input
+    = case parse p "" input of
+        Left err -> do putStrLn "parse error"
+                       print err
+                       return (IntLit 0)
+        Right ast -> print ast >> return ast
