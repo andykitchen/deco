@@ -6,8 +6,6 @@ import Text.Parsec.Prim (parse)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Expr (buildExpressionParser, Operator(..), Assoc(..))
 
-import Control.Monad.IO.Class (MonadIO, liftIO)
-
 import Lexer
 
 data Expr = BinOp String Expr Expr
