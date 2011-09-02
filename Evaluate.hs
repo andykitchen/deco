@@ -16,10 +16,14 @@ data Value = NumVal Double
            | Fun [Symbol] Expr Bindings
            | PrimFun ([Value] -> ProgramEnv Value)
            | Undefined
-  deriving (Show, Eq)
+  deriving (Eq)
 
-instance Show ([Value] -> ProgramEnv Value) where
-  show _  = "<primitive function>"
+instance Show Value where
+  show (NumVal x)     = show x
+  show (StrVal x)     = show x
+  show (Fun args _ _) = "<function(" ++ (intercalate "," args) ++ ")>"
+  show (PrimFun _)    = "<primitive function>"
+  show Undefined      = "<undefined>"
 
 instance Eq ([Value] -> ProgramEnv Value) where
   x == y  = False
@@ -38,6 +42,7 @@ binding sym = do
              Just val -> return val
              Nothing  -> return Undefined
 
+-- TODO fixme rebind if binding already exists
 rebind :: String -> Value -> ProgramEnv Value
 rebind str val = do
        cur : stack <- get
