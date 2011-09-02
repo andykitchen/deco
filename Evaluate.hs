@@ -21,17 +21,19 @@ instance Show ([Value] -> Value) where
 instance Eq ([Value] -> Value) where
   x == y  = False
 
-type Bindings   = [Map Symbol Value]
+type Frame      = Map Symbol Value
+type Bindings   = [Frame]
 type ProgramEnv = StateT Bindings IO
+type EnvValue   = ProgramEnv Value
 
 primArithLift :: (Integer -> Integer -> Integer) -> Value
 primArithLift  f = PrimFun (\[(IntVal x),(IntVal y)] -> IntVal (f x y))
 
 defaultBindings :: Bindings
 defaultBindings = [fromList [("+", primArithLift (+)),
-                            ("-", primArithLift (-)),
-                            ("*", primArithLift (*)),
-                            ("/", primArithLift div)
+                             ("-", primArithLift (-)),
+                             ("*", primArithLift (*)),
+                             ("/", primArithLift div)
                             ]]
 
 binding :: String -> ProgramEnv Value
@@ -49,13 +51,18 @@ rebind str val = do
        put (insert str val cur : stack)
        return val
 
-stackframe :: Map Symbol Value -> Bindings -> ProgramEnv Value -> ProgramEnv Value
-stackframe frame closure computation = do
+stackframe :: Bindings -> ProgramEnv a -> ProgramEnv a
+stackframe frame computation = do
            base <- get
-           put (frame : closure)
+           put frame
            val <- computation
            put base
            return val
+
+withBinding :: (Bindings -> a) -> ProgramEnv a
+withBinding f = do
+            bindings <- get
+            return (f bindings)
 
 runProgram :: Bindings -> ProgramEnv a -> IO a
 runProgram = flip evalStateT
@@ -82,9 +89,7 @@ evaluate (BinOp op l r) = do
 
 evaluate (Multi exps) = (liftM last . mapM evaluate) exps
 
-evaluate (Lambda args exp) = do
-         binds <- get -- TODO factor out
-         return (Fun args exp binds)
+evaluate (Lambda args exp) = withBinding (Fun args exp)
 
 evaluate (Application fun exps) = do
          fun'  <- evaluate fun
@@ -95,5 +100,6 @@ evaluate (Application fun exps) = do
 evaluate _ = return Undefined
 
 apply :: [Symbol] -> Expr -> Bindings -> [Value] -> ProgramEnv Value
-apply args body closure exps = stackframe frame closure (evaluate body)
-      where frame = fromList (zip args exps)
+apply args body closure exps =
+      let frame = fromList (zip args exps) in
+        stackframe (frame : closure) (evaluate body)
