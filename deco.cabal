@@ -12,7 +12,9 @@ Executable deco
   Main-is:           Main.hs
   Other-Modules:     Parser,
                      Lexer,
-                     Evaluate
+                     Evaluate,
+                     Primitives
+
   Extensions:        FlexibleInstances
   Build-Depends:
     base >= 3 && < 5,

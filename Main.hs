@@ -7,6 +7,7 @@ import System.Console.Haskeline
 
 import Parser
 import Evaluate
+import Primitives
 
 main :: IO ()
 main = (runProgram defaultBindings . runInputT defaultSettings) repl

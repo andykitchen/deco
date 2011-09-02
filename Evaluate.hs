@@ -1,9 +1,12 @@
 {-# LANGUAGE FlexibleInstances #-}
-module Evaluate(ProgramEnv, evaluate, runProgram, defaultBindings) where
+module Evaluate (
+       ProgramEnv, evaluate, runProgram,
+       Value(..), Bindings
+)
+where
 
 import Control.Monad (liftM, msum)
 import Control.Monad.Trans.State(StateT, get, put, runStateT, evalStateT)
-import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Map as Map (Map, fromList, insert, lookup)
 
 import Parser
@@ -25,23 +28,6 @@ type Frame      = Map Symbol Value
 type Bindings   = [Frame]
 type ProgramEnv = StateT Bindings IO
 type EnvValue   = ProgramEnv Value
-
-primArithLift :: (Integer -> Integer -> Integer) -> Value
-primArithLift f =
-  PrimFun (\[(IntVal x),(IntVal y)] -> (return . IntVal) (f x y))
-
-defaultBindings :: Bindings
-defaultBindings = [fromList [("+", primArithLift (+)),
-                             ("-", primArithLift (-)),
-                             ("*", primArithLift (*)),
-                             ("/", primArithLift div),
-                             ("putStr", PrimFun putStrPrim)
-                            ]]
-
-putStrPrim :: [Value] -> ProgramEnv Value
-putStrPrim [(StrVal str)] = do
-           (liftIO . putStr) str
-           return Undefined
 
 binding :: String -> ProgramEnv Value
 binding sym = do
