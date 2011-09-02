@@ -1,4 +1,4 @@
-module Parser (parseStr, Expr(..)) where
+module Parser (parseStr, Expr(..), Symbol) where
 
 import Text.Parsec ((<|>), (<?>), try, eof, many1)
 import Text.Parsec.Combinator (optional, optionMaybe, sepBy, sepEndBy1)
@@ -8,16 +8,18 @@ import Text.Parsec.Expr (buildExpressionParser, Operator(..), Assoc(..))
 
 import Lexer
 
+type Symbol = String
+
 data Expr = BinOp String Expr Expr
           | UniOp String Expr
           | IntLit Integer
           | StrLit String
-          | Ident String
-          | Lambda [String] Expr
+          | Ident Symbol
+          | Lambda [Symbol] Expr
           | Application Expr [Expr]
           | Multi [Expr]
           | If Expr Expr (Maybe Expr)
-  deriving Show
+  deriving (Show, Eq)
 
 expr        :: Parser Expr
 primary     :: Parser Expr

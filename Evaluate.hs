@@ -10,6 +10,7 @@ import Parser
 
 data Value = IntVal Integer
            | StrVal String
+           | Fun [Symbol] Expr
            | PrimFun ([Value] -> Value)
            | Undefined
   deriving (Show, Eq)
@@ -23,15 +24,15 @@ instance Eq ([Value] -> Value) where
 type Bindings   = Map String Value
 type ProgramEnv = StateT Bindings IO
 
-primLift :: (Integer -> Integer -> Integer) -> Value
-primLift  f = PrimFun (\[(IntVal x),(IntVal y)] -> IntVal (f x y))
+primArithLift :: (Integer -> Integer -> Integer) -> Value
+primArithLift  f = PrimFun (\[(IntVal x),(IntVal y)] -> IntVal (f x y))
 
 defaultBindings :: Bindings
-defaultBindings = fromList [("+", primLift (+)),
-                            ("-", primLift (-)),
-                            ("*", primLift (*)),
-                            ("/", primLift div),
-                            ("x", IntVal 3)]
+defaultBindings = fromList [("+", primArithLift (+)),
+                            ("-", primArithLift (-)),
+                            ("*", primArithLift (*)),
+                            ("/", primArithLift div)
+                            ]
 
 binding :: String -> ProgramEnv Value
 binding str = do
@@ -45,7 +46,7 @@ rebind str val = do
        put (insert str val bindings)
        return val
 
-runProgram :: Bindings -> ProgramEnv () -> IO ()
+runProgram :: Bindings -> ProgramEnv a -> IO a
 runProgram = flip evalStateT
 
 evaluateIO :: Expr -> Bindings -> IO (Value, Bindings)
@@ -69,5 +70,13 @@ evaluate (BinOp op l r) = do
               PrimFun f -> return (f [lhs, rhs])
 
 evaluate (Multi exps) = (liftM last . mapM evaluate) exps
+
+evaluate (Lambda args exp) = return (Fun args exp)
+
+evaluate (Application fun args) = do
+         fun'  <- evaluate fun
+         args' <- mapM evaluate args
+         case fun' of
+              (Fun as exps) -> return (head args')
 
 evaluate _ = return Undefined

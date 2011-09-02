@@ -16,12 +16,8 @@ repl = do
   input <- getInputLine "> "
   case input of
     Nothing   -> return ()
-    Just line -> do
-      ast   <- parse' line
-      value <- evaluate' ast
-      print' value
-      repl
+    Just line -> parse' line >>= evaluate' >>= print' >> repl
 
+parse'    = liftIO . parseStr
 evaluate' = lift   . evaluate
 print'    = liftIO . print
-parse'    = liftIO . parseStr
