@@ -3,7 +3,7 @@ module Evaluate(ProgramEnv, evaluate, runProgram, defaultBindings) where
 
 import Control.Monad (liftM, msum)
 import Control.Monad.Trans.State(StateT, get, put, runStateT, evalStateT)
-import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Map as Map (Map, fromList, insert, lookup)
 
 import Parser
@@ -11,14 +11,14 @@ import Parser
 data Value = IntVal Integer
            | StrVal String
            | Fun [Symbol] Expr Bindings
-           | PrimFun ([Value] -> Value)
+           | PrimFun ([Value] -> ProgramEnv Value)
            | Undefined
   deriving (Show, Eq)
 
-instance Show ([Value] -> Value) where
+instance Show ([Value] -> ProgramEnv Value) where
   show _  = "<primitive function>"
 
-instance Eq ([Value] -> Value) where
+instance Eq ([Value] -> ProgramEnv Value) where
   x == y  = False
 
 type Frame      = Map Symbol Value
@@ -27,14 +27,21 @@ type ProgramEnv = StateT Bindings IO
 type EnvValue   = ProgramEnv Value
 
 primArithLift :: (Integer -> Integer -> Integer) -> Value
-primArithLift  f = PrimFun (\[(IntVal x),(IntVal y)] -> IntVal (f x y))
+primArithLift f =
+  PrimFun (\[(IntVal x),(IntVal y)] -> (return . IntVal) (f x y))
 
 defaultBindings :: Bindings
 defaultBindings = [fromList [("+", primArithLift (+)),
                              ("-", primArithLift (-)),
                              ("*", primArithLift (*)),
-                             ("/", primArithLift div)
+                             ("/", primArithLift div),
+                             ("putStr", PrimFun putStrPrim)
                             ]]
+
+putStrPrim :: [Value] -> ProgramEnv Value
+putStrPrim [(StrVal str)] = do
+           (liftIO . putStr) str
+           return Undefined
 
 binding :: String -> ProgramEnv Value
 binding sym = do
@@ -84,8 +91,7 @@ evaluate (BinOp op l r) = do
          var <- binding op
          lhs <- evaluate l
          rhs <- evaluate r
-         case var of
-              PrimFun f -> return (f [lhs, rhs])
+         apply var [lhs, rhs]
 
 evaluate (Multi exps) = (liftM last . mapM evaluate) exps
 
@@ -94,12 +100,13 @@ evaluate (Lambda args exp) = withBinding (Fun args exp)
 evaluate (Application fun exps) = do
          fun'  <- evaluate fun
          exps' <- mapM evaluate exps
-         case fun' of
-              Fun args body closure -> apply args body closure exps'
+         apply fun' exps'
 
 evaluate _ = return Undefined
 
-apply :: [Symbol] -> Expr -> Bindings -> [Value] -> ProgramEnv Value
-apply args body closure exps =
+apply :: Value -> [Value] -> ProgramEnv Value
+apply (PrimFun f) exps = f exps
+
+apply (Fun args body closure) exps =
       let frame = fromList (zip args exps) in
         stackframe (frame : closure) (evaluate body)
