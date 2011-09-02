@@ -9,13 +9,12 @@ defaultBindings :: Bindings
 defaultBindings = [fromList [("+", arithLift (+)),
                              ("-", arithLift (-)),
                              ("*", arithLift (*)),
-                             ("/", arithLift div),
-                             ("putStr", PrimFun putStrPrim)
+                             ("/", arithLift (/)),
+                             ("print", PrimFun putStrPrim)
                             ]]
 
-arithLift :: (Integer -> Integer -> Integer) -> Value
 arithLift f =
-  PrimFun (\[(IntVal x),(IntVal y)] -> (return . IntVal) (f x y))
+  PrimFun (\[(NumVal x),(NumVal y)] -> (return . NumVal) (f x y))
 
 putStrPrim :: [Value] -> ProgramEnv Value
 putStrPrim [(StrVal str)] = do

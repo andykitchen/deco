@@ -1,17 +1,17 @@
 {-# LANGUAGE FlexibleInstances #-}
 module Evaluate (
        ProgramEnv, evaluate, runProgram,
-       Value(..), Bindings
-)
+       Value(..), Bindings)
 where
 
 import Control.Monad (liftM, msum)
 import Control.Monad.Trans.State(StateT, get, put, runStateT, evalStateT)
 import Data.Map as Map (Map, fromList, insert, lookup)
+import Data.List (intercalate)
 
 import Parser
 
-data Value = IntVal Integer
+data Value = NumVal Double
            | StrVal String
            | Fun [Symbol] Expr Bindings
            | PrimFun ([Value] -> ProgramEnv Value)
@@ -65,7 +65,7 @@ evaluateIO exp env = runStateT (evaluate exp) env
 
 evaluate :: Expr -> ProgramEnv Value
 
-evaluate (IntLit i) = return (IntVal i)
+evaluate (NumLit i) = return (NumVal i)
 evaluate (StrLit s) = return (StrVal s)
 evaluate (Ident id) = binding id
 

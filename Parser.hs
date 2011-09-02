@@ -12,7 +12,7 @@ type Symbol = String
 
 data Expr = BinOp String Expr Expr
           | UniOp String Expr
-          | IntLit Integer
+          | NumLit Double
           | StrLit String
           | Ident Symbol
           | Lambda [Symbol] Expr
@@ -23,12 +23,15 @@ data Expr = BinOp String Expr Expr
 
 expr        :: Parser Expr
 primary     :: Parser Expr
+number      :: Parser Expr
 lambda      :: Parser Expr
 application :: Parser Expr
 multi       :: Parser Expr
 if'         :: Parser Expr
 
-asIntLit = return . IntLit
+asNumLit :: Double -> Parser Expr
+
+asNumLit = return . NumLit
 asStrLit = return . StrLit
 asIdent  = return . Ident
 asMulti  = return . Multi
@@ -60,9 +63,15 @@ primary  =  try application
         <|> if'
         <|> (stringLiteral >>= asStrLit)
         <|> (identifier >>= asIdent)
-        <|> (integer >>= asIntLit)
+        <|> number
         <|> lambda
         <?> "simple expression"
+
+number = do
+  num <- naturalOrFloat
+  return $ case num of
+       Left  x -> NumLit (fromIntegral x)
+       Right x -> NumLit x
 
 lambda = do
   symbol "\\"
@@ -100,5 +109,5 @@ parseStr' p input
     = case parse p "" input of
         Left err -> do putStrLn "parse error"
                        print err
-                       return (IntLit 0)
-        Right ast -> print ast >> return ast
+                       return (NumLit 0)
+        Right ast -> return ast
