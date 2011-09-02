@@ -1,10 +1,10 @@
 {-# LANGUAGE FlexibleInstances #-}
 module Evaluate(ProgramEnv, evaluate, runProgram, defaultBindings) where
 
-import Control.Monad (liftM)
-import Control.Monad.Trans.State(StateT, get, put, runStateT, evalStateT)
+import Control.Monad (liftM, msum)
+import Control.Monad.Trans.State(StateT, get, put, runStateT, evalStateT, modify)
 import Control.Monad.IO.Class (MonadIO)
-import Data.Map (Map, fromList, insert, findWithDefault)
+import Data.Map as Map (Map, fromList, insert, lookup)
 
 import Parser
 
@@ -21,30 +21,41 @@ instance Show ([Value] -> Value) where
 instance Eq ([Value] -> Value) where
   x == y  = False
 
-type Bindings   = Map String Value
+type Bindings   = [Map Symbol Value]
 type ProgramEnv = StateT Bindings IO
 
 primArithLift :: (Integer -> Integer -> Integer) -> Value
 primArithLift  f = PrimFun (\[(IntVal x),(IntVal y)] -> IntVal (f x y))
 
 defaultBindings :: Bindings
-defaultBindings = fromList [("+", primArithLift (+)),
+defaultBindings = [fromList [("+", primArithLift (+)),
                             ("-", primArithLift (-)),
                             ("*", primArithLift (*)),
                             ("/", primArithLift div)
-                            ]
+                            ]]
 
 binding :: String -> ProgramEnv Value
-binding str = do
+binding sym = do
         bindings <- get
-        let val = findWithDefault Undefined str bindings
-        return val
+        let vals = map (Map.lookup sym) bindings
+            mval = msum vals
+        case mval of
+             Just val -> return val
+             Nothing  -> return Undefined
 
 rebind :: String -> Value -> ProgramEnv Value
 rebind str val = do
-       bindings <- get
-       put (insert str val bindings)
+       cur : stack <- get
+       put (insert str val cur : stack)
        return val
+
+stackframe :: Map Symbol Value -> ProgramEnv Value -> ProgramEnv Value
+stackframe frame state = do
+           base <- get
+           modify (\stack -> frame:stack)
+           val <- state
+           put base
+           return val
 
 runProgram :: Bindings -> ProgramEnv a -> IO a
 runProgram = flip evalStateT
@@ -73,10 +84,15 @@ evaluate (Multi exps) = (liftM last . mapM evaluate) exps
 
 evaluate (Lambda args exp) = return (Fun args exp)
 
-evaluate (Application fun args) = do
+evaluate (Application fun exps) = do
          fun'  <- evaluate fun
-         args' <- mapM evaluate args
+         exps' <- mapM evaluate exps
          case fun' of
-              (Fun as exps) -> return (head args')
+              Fun args body -> apply args body exps'
 
 evaluate _ = return Undefined
+
+apply :: [Symbol] -> Expr -> [Value] -> ProgramEnv Value
+apply args body exps = do
+      let frame = fromList (zip args exps)
+      stackframe frame (evaluate body)
