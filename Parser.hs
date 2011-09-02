@@ -29,9 +29,6 @@ application :: Parser Expr
 multi       :: Parser Expr
 if'         :: Parser Expr
 
-asNumLit :: Double -> Parser Expr
-
-asNumLit = return . NumLit
 asStrLit = return . StrLit
 asIdent  = return . Ident
 asMulti  = return . Multi
