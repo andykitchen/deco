@@ -2,7 +2,7 @@
 module Evaluate(ProgramEnv, evaluate, runProgram, defaultBindings) where
 
 import Control.Monad (liftM, msum)
-import Control.Monad.Trans.State(StateT, get, put, runStateT, evalStateT, modify)
+import Control.Monad.Trans.State(StateT, get, put, runStateT, evalStateT)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Map as Map (Map, fromList, insert, lookup)
 
@@ -10,7 +10,7 @@ import Parser
 
 data Value = IntVal Integer
            | StrVal String
-           | Fun [Symbol] Expr
+           | Fun [Symbol] Expr Bindings
            | PrimFun ([Value] -> Value)
            | Undefined
   deriving (Show, Eq)
@@ -49,11 +49,11 @@ rebind str val = do
        put (insert str val cur : stack)
        return val
 
-stackframe :: Map Symbol Value -> ProgramEnv Value -> ProgramEnv Value
-stackframe frame state = do
+stackframe :: Map Symbol Value -> Bindings -> ProgramEnv Value -> ProgramEnv Value
+stackframe frame closure computation = do
            base <- get
-           modify (\stack -> frame:stack)
-           val <- state
+           put (frame : closure)
+           val <- computation
            put base
            return val
 
@@ -82,17 +82,18 @@ evaluate (BinOp op l r) = do
 
 evaluate (Multi exps) = (liftM last . mapM evaluate) exps
 
-evaluate (Lambda args exp) = return (Fun args exp)
+evaluate (Lambda args exp) = do
+         binds <- get -- TODO factor out
+         return (Fun args exp binds)
 
 evaluate (Application fun exps) = do
          fun'  <- evaluate fun
          exps' <- mapM evaluate exps
          case fun' of
-              Fun args body -> apply args body exps'
+              Fun args body closure -> apply args body closure exps'
 
 evaluate _ = return Undefined
 
-apply :: [Symbol] -> Expr -> [Value] -> ProgramEnv Value
-apply args body exps = do
-      let frame = fromList (zip args exps)
-      stackframe frame (evaluate body)
+apply :: [Symbol] -> Expr -> Bindings -> [Value] -> ProgramEnv Value
+apply args body closure exps = stackframe frame closure (evaluate body)
+      where frame = fromList (zip args exps)
