@@ -10,16 +10,14 @@ import Evaluate
 import Primitives
 
 main :: IO ()
-main = do
-     defaultBindings <- makeDefaultBindings
-     (runProgram defaultBindings . runInputT defaultSettings) repl
+main = (runProgram defaultBindings . runInputT defaultSettings) repl
 
 repl :: InputT ProgramEnv ()
 repl = do
   input <- getInputLine "> "
   case input of
-    Nothing   -> return ()
     Just line -> parse' line >>= evaluate' >>= print' >> repl
+    Nothing   -> return ()
 
 parse'    = liftIO . parseStr
 evaluate' = lift   . evaluate

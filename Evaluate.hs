@@ -8,9 +8,9 @@ import Control.Monad (liftM, msum)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.State(StateT, get, put, runStateT, evalStateT)
 
-import Data.HashTable (HashTable)
-import qualified Data.HashTable as HT
 import Data.List (intercalate)
+import Data.HashTable as HT
+       (HashTable, fromList, lookup, update, insert, hashString)
 
 import Parser
 
@@ -33,15 +33,13 @@ type ProgramEnv = StateT Bindings IO
 type EnvValue   = ProgramEnv Value
 
 newFrame :: [(Symbol, Value)] -> ProgramEnv Frame
-newFrame ls = liftIO (HT.fromList HT.hashString ls)
+lookup'  :: Symbol -> Frame -> ProgramEnv (Maybe Value)
+update'  :: Frame -> Symbol -> Value -> ProgramEnv Bool
+insert'  :: Frame -> Symbol -> Value -> ProgramEnv ()
 
-lookup' :: Symbol -> Frame -> ProgramEnv (Maybe Value)
-lookup' sym frame = liftIO (HT.lookup frame sym)
-
-update' :: Frame -> Symbol -> Value -> ProgramEnv Bool
+newFrame ls           = liftIO (HT.fromList HT.hashString ls)
+lookup' sym frame     = liftIO (HT.lookup frame sym)
 update' frame sym val = liftIO (HT.update frame sym val)
-
-insert' :: Frame -> Symbol -> Value -> ProgramEnv ()
 insert' frame sym val = liftIO (HT.insert frame sym val)
 
 binding :: Symbol -> ProgramEnv Value
@@ -56,8 +54,8 @@ binding sym = do
 rebind :: Symbol -> Value -> ProgramEnv Value
 rebind sym val = do
        bindings <- get
-       found <- rebindWalk sym val bindings
-       case found of
+       bound <- rebindWalk sym val bindings
+       case bound of
             False -> insert' (head bindings) sym val
             True  -> return ()
        return val
@@ -83,8 +81,10 @@ withBinding f = do
             bindings <- get
             return (f bindings)
 
-runProgram :: Bindings -> ProgramEnv a -> IO a
-runProgram = flip evalStateT
+runProgram :: IO Bindings -> ProgramEnv a -> IO a
+runProgram getBindings program = do
+           bindings <- getBindings
+           evalStateT program bindings
 
 evaluateIO :: Expr -> Bindings -> IO (Value, Bindings)
 evaluateIO exp env = runStateT (evaluate exp) env
