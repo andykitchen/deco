@@ -10,7 +10,9 @@ import Evaluate
 import Primitives
 
 main :: IO ()
-main = (runProgram defaultBindings . runInputT defaultSettings) repl
+main = do
+     defaultBindings <- makeDefaultBindings
+     (runProgram defaultBindings . runInputT defaultSettings) repl
 
 repl :: InputT ProgramEnv ()
 repl = do

@@ -1,12 +1,15 @@
 {-# LANGUAGE FlexibleInstances #-}
 module Evaluate (
-       ProgramEnv, evaluate, runProgram,
+       ProgramEnv, evaluate, runProgram, newFrame,
        Value(..), Bindings)
 where
 
 import Control.Monad (liftM, msum)
+import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.State(StateT, get, put, runStateT, evalStateT)
-import Data.Map as Map (Map, fromList, insert, lookup)
+
+import Data.HashTable (HashTable)
+import qualified Data.HashTable as HT
 import Data.List (intercalate)
 
 import Parser
@@ -16,7 +19,6 @@ data Value = NumVal Double
            | Fun [Symbol] Expr Bindings
            | PrimFun ([Value] -> ProgramEnv Value)
            | Undefined
-  deriving (Eq)
 
 instance Show Value where
   show (NumVal x)     = show x
@@ -25,29 +27,48 @@ instance Show Value where
   show (PrimFun _)    = "<primitive function>"
   show Undefined      = "<undefined>"
 
-instance Eq ([Value] -> ProgramEnv Value) where
-  x == y  = False
-
-type Frame      = Map Symbol Value
+type Frame      = HashTable Symbol Value
 type Bindings   = [Frame]
 type ProgramEnv = StateT Bindings IO
 type EnvValue   = ProgramEnv Value
 
-binding :: String -> ProgramEnv Value
+newFrame :: [(Symbol, Value)] -> ProgramEnv Frame
+newFrame ls = liftIO (HT.fromList HT.hashString ls)
+
+lookup' :: Symbol -> Frame -> ProgramEnv (Maybe Value)
+lookup' sym frame = liftIO (HT.lookup frame sym)
+
+update' :: Frame -> Symbol -> Value -> ProgramEnv Bool
+update' frame sym val = liftIO (HT.update frame sym val)
+
+insert' :: Frame -> Symbol -> Value -> ProgramEnv ()
+insert' frame sym val = liftIO (HT.insert frame sym val)
+
+binding :: Symbol -> ProgramEnv Value
 binding sym = do
         bindings <- get
-        let vals = map (Map.lookup sym) bindings
-            mval = msum vals
+        mvals    <- mapM (lookup' sym) bindings
+        let mval = msum mvals
         case mval of
              Just val -> return val
              Nothing  -> return Undefined
 
--- TODO fixme rebind if binding already exists
-rebind :: String -> Value -> ProgramEnv Value
-rebind str val = do
-       cur : stack <- get
-       put (insert str val cur : stack)
+rebind :: Symbol -> Value -> ProgramEnv Value
+rebind sym val = do
+       bindings <- get
+       found <- rebindWalk sym val bindings
+       case found of
+            False -> insert' (head bindings) sym val
+            True  -> return ()
        return val
+
+rebindWalk :: Symbol -> Value -> Bindings -> ProgramEnv Bool
+rebindWalk sym val [] = return False
+rebindWalk sym val (frame : stack) = do
+           found <- update' frame sym val
+           case found of
+                True  -> return True
+                False -> rebindWalk sym val stack
 
 stackframe :: Bindings -> ProgramEnv a -> ProgramEnv a
 stackframe frame computation = do
@@ -98,6 +119,6 @@ evaluate _ = return Undefined
 apply :: Value -> [Value] -> ProgramEnv Value
 apply (PrimFun f) exps = f exps
 
-apply (Fun args body closure) exps =
-      let frame = fromList (zip args exps) in
-        stackframe (frame : closure) (evaluate body)
+apply (Fun args body closure) exps = do
+      frame <- newFrame (zip args exps)
+      stackframe (frame : closure) (evaluate body)
