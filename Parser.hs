@@ -3,6 +3,7 @@ module Parser (parseStr, Expr(..), Symbol) where
 import Text.Parsec ((<|>), (<?>), try, eof, many1)
 import Text.Parsec.Combinator (optional, optionMaybe, sepBy, sepEndBy1)
 import Text.Parsec.Prim (parse)
+import Text.Parsec.Char (newline)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Expr (buildExpressionParser, Operator(..), Assoc(..))
 
@@ -100,7 +101,7 @@ if' = do
 
 program = do
     whiteSpace
-    x <- expr
+    x <- sepEndBy1 expr semi >>= asMulti
     eof
     return x
 
