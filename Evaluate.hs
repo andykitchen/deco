@@ -114,6 +114,15 @@ evaluate (Application fun exps) = do
          exps' <- mapM evaluate exps
          apply fun' exps'
 
+evaluate (If test then' melse') = do
+         val <- evaluate test
+         case val of
+           BoolVal b -> case b of
+             True  -> evaluate then'
+             False -> case melse' of
+               Just else' -> evaluate else'
+               Nothing    -> return Undefined
+
 evaluate _ = return Undefined
 
 apply :: Value -> [Value] -> ProgramEnv Value
