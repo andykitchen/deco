@@ -14,18 +14,33 @@ import Data.HashTable as HT
 
 import Parser
 
-data Value = NumVal Double
-           | StrVal String
+data Value = NumVal  Double
+           | StrVal  String
+           | BoolVal Bool
            | Fun [Symbol] Expr Bindings
            | PrimFun ([Value] -> ProgramEnv Value)
            | Undefined
 
 instance Show Value where
-  show (NumVal x)     = show x
-  show (StrVal x)     = show x
+  show (BoolVal x)    = show x
+  show (NumVal  x)    = show x
+  show (StrVal  x)    = show x
   show (Fun args _ _) = "<function(" ++ (intercalate "," args) ++ ")>"
   show (PrimFun _)    = "<primitive function>"
   show Undefined      = "<undefined>"
+
+instance Eq Value where
+  BoolVal a == BoolVal b   =   a == b
+  NumVal  a == NumVal  b   =   a == b
+  StrVal  a == StrVal  b   =   a == b
+  _         == _           =   False
+
+instance Ord Value where
+  compare (BoolVal a) (BoolVal b)  =  compare a b
+  compare (NumVal  a) (NumVal  b)  =  compare a b
+  compare (StrVal  a) (StrVal  b)  =  compare a b
+  -- TODO create new ord class for partial orderings
+  compare _ _ = undefined
 
 type Frame      = HashTable Symbol Value
 type Bindings   = [Frame]
@@ -91,9 +106,10 @@ evaluateIO exp env = runStateT (evaluate exp) env
 
 evaluate :: Expr -> ProgramEnv Value
 
-evaluate (NumLit i) = return (NumVal i)
-evaluate (StrLit s) = return (StrVal s)
-evaluate (Ident id) = binding id
+evaluate (BoolLit b) = return (BoolVal b)
+evaluate (NumLit  i) = return (NumVal  i)
+evaluate (StrLit  s) = return (StrVal  s)
+evaluate (Ident  id) = binding id
 
 evaluate (BinOp "=" (Ident name) r) = do
          rhs <- evaluate r

@@ -12,11 +12,24 @@ defaultBindings = sequence
                      ("-", arithLift (-)),
                      ("*", arithLift (*)),
                      ("/", arithLift (/)),
+
+
+                     ("==", compLift (==)),
+                     ("!=", compLift (\x y -> not (x == y))),
+                     ("<",  compLift (<)),
+                     (">",  compLift (>)),
+                     ("<=", compLift (<=)),
+                     (">=", compLift (>=)),
+
+
                      ("print", PrimFun putStrPrim)]
                 ]
 
 arithLift f =
   PrimFun (\[(NumVal x),(NumVal y)] -> (return . NumVal) (f x y))
+
+compLift :: (Value -> Value -> Bool) -> Value
+compLift comp = PrimFun (\[a, b] -> (return . BoolVal) (a `comp` b))
 
 putStrPrim :: [Value] -> ProgramEnv Value
 putStrPrim [(StrVal str)] = do

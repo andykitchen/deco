@@ -12,6 +12,7 @@ type Symbol = String
 
 data Expr = BinOp String Expr Expr
           | UniOp String Expr
+          | BoolLit Bool
           | NumLit Double
           | StrLit String
           | Ident Symbol
@@ -23,6 +24,7 @@ data Expr = BinOp String Expr Expr
 
 expr        :: Parser Expr
 primary     :: Parser Expr
+boolean     :: Parser Expr
 number      :: Parser Expr
 lambda      :: Parser Expr
 application :: Parser Expr
@@ -59,10 +61,14 @@ primary  =  try application
         <|> multi
         <|> if'
         <|> (stringLiteral >>= asStrLit)
-        <|> (identifier >>= asIdent)
+        <|> (identifier    >>= asIdent)
+        <|> boolean
         <|> number
         <|> lambda
         <?> "simple expression"
+
+boolean  =  (reserved "true"  >> return (BoolLit True))
+        <|> (reserved "false" >> return (BoolLit False))
 
 number = do
   num <- naturalOrFloat
