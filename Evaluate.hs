@@ -111,15 +111,20 @@ evaluate (NumLit  i) = return (NumVal  i)
 evaluate (StrLit  s) = return (StrVal  s)
 evaluate (Ident  id) = binding id
 
+evaluate (UniOp op exp) = do
+         fun <- binding op
+         val <- evaluate exp
+         apply fun [val]
+
 evaluate (BinOp "=" (Ident name) r) = do
          rhs <- evaluate r
          rebind name rhs
 
 evaluate (BinOp op l r) = do
-         var <- binding op
+         fun <- binding op
          lhs <- evaluate l
          rhs <- evaluate r
-         apply var [lhs, rhs]
+         apply fun [lhs, rhs]
 
 evaluate (Multi exps) = (liftM last . mapM evaluate) exps
 
@@ -138,8 +143,6 @@ evaluate (If test then' melse') = do
              False -> case melse' of
                Just else' -> evaluate else'
                Nothing    -> return Undefined
-
-evaluate _ = return Undefined
 
 apply :: Value -> [Value] -> ProgramEnv Value
 apply (PrimFun f) exps = f exps
