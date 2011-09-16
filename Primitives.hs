@@ -21,8 +21,9 @@ defaultBindings = sequence
                      ("<=", compLift (<=)),
                      (">=", compLift (>=)),
 
-
-                     ("!", logicLift1 (not)),
+                     ("!",  logicLift1 not),
+                     ("&&", logicLift  (&&)),
+                     ("||", logicLift  (||)),
 
                      ("string", PrimFun showPrim),
 
@@ -43,6 +44,10 @@ compLift comp =
 logicLift1 :: (Bool -> Bool) -> Value
 logicLift1 op =
   PrimFun (\[(BoolVal a)] -> (return . BoolVal) (op a))
+
+logicLift :: (Bool -> Bool -> Bool) -> Value
+logicLift op =
+  PrimFun (\[(BoolVal a), (BoolVal b)] -> (return . BoolVal) (a `op` b))
 
 putStrPrim :: [Value] -> ProgramEnv Value
 putStrPrim [(StrVal str)] = do

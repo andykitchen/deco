@@ -41,13 +41,19 @@ expr    =  buildExpressionParser table primary
 
 table   = [[prefix "-"],
            [postfix "++", postfix "--"],
+
            [binary "*"  AssocLeft, binary "/"  AssocLeft],
+
            [binary "+"  AssocLeft, binary "-"  AssocLeft],
+
            [binary "==" AssocLeft, binary "!=" AssocLeft,
             binary "<"  AssocLeft, binary ">"  AssocLeft,
             binary "<=" AssocLeft, binary ">=" AssocLeft,
             prefix "!"],
-           [binary "=" AssocRight]]
+
+           [binary "=" AssocRight],
+
+           [binary "&&" AssocLeft, binary "||" AssocLeft]]
 
 binary  name assoc = Infix  (exprRule name BinOp) assoc
 

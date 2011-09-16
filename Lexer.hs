@@ -21,7 +21,8 @@ language = LanguageDef {
     reservedNames = ["if", "else", "true", "false"],
     reservedOpNames =
       ["+", "-", "*", "/", "++", "--",
-       "!", "<", ">", "<=", ">=", "==", "!=", "="],
+       "<", ">", "<=", ">=", "==", "!=", "=",
+       "&&", "||", "!"],
     caseSensitive = True
 }
 
