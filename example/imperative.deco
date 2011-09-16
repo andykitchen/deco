@@ -1,0 +1,16 @@
+# The language allows variables to be rewritten
+
+str = "Hello";
+print(str);
+
+str = " ";
+print(str);
+
+str = "World";
+print(str);
+
+str = "!";
+print(str);
+
+str = "\n";
+print(str);

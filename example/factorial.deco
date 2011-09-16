@@ -1,0 +1,11 @@
+# Recursion
+
+fact = \x -> {
+    if(x > 1) {
+        x * fact(x - 1);
+    } else {
+        x;
+    }
+};
+
+print(fact(4));

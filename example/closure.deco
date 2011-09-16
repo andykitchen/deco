@@ -1,0 +1,14 @@
+# Closures
+
+y = 1;
+
+addn = \x -> \y -> x + y;
+
+y = 1;
+
+add5 = addn(5);
+add9 = addn(9);
+
+print(y);
+print(add5(1));
+print(add9(2));

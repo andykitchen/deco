@@ -1,0 +1,11 @@
+print("Enter your name...\n");
+
+name = read();
+
+print("Enter your age...\n");
+
+age  = read();
+
+print("Hello ");
+print(name);
+print("\n");
