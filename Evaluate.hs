@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleInstances #-}
 module Evaluate (
        ProgramEnv, evaluate, runProgram, newFrame,
        Value(..), Bindings)

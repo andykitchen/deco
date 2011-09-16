@@ -1,9 +1,10 @@
+{-# LANGUAGE NoMonomorphismRestriction #-}
 module Main (main) where
 
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.IO.Class (liftIO)
 
-import System (getArgs)
+import System.Environment (getArgs)
 import System.Console.Haskeline
 
 import Parser
@@ -26,7 +27,8 @@ replIO = (runProgram defaultBindings . runInputT defaultSettings) repl
 
 
 load :: String -> ProgramEnv ()
-load path = readFile' path >>= parse' >>= evaluate >> return ()
+-- load path = readFile' path >>= parse' >>= evaluate >> return ()
+load = undefined
 
 repl :: InputT ProgramEnv ()
 repl = do
