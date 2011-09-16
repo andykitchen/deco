@@ -15,7 +15,7 @@ defaultBindings = sequence
 
 
                      ("==", compLift (==)),
-                     ("!=", compLift (\x y -> not (x == y))),
+                     ("!=", compLift (/=)),
                      ("<",  compLift (<)),
                      (">",  compLift (>)),
                      ("<=", compLift (<=)),
