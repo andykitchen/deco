@@ -8,7 +8,7 @@ import Evaluate
 defaultBindings :: IO Bindings
 defaultBindings = sequence
                 [fromList hashString
-                    [("+", arithLift (+)),
+                    [("+", PrimFun plusPrim),
                      ("-", arithLift (-)),
                      ("*", arithLift (*)),
                      ("/", arithLift (/)),
@@ -36,6 +36,9 @@ type Number = Double
 arithLift :: (Number -> Number -> Number) -> Value
 arithLift f =
   PrimFun (\[(NumVal x),(NumVal y)] -> (return . NumVal) (f x y))
+
+plusPrim [(NumVal x),(NumVal y)] = (return . NumVal) (x +  y)
+plusPrim [(StrVal x),(StrVal y)] = (return . StrVal) (x ++ y)
 
 compLift :: (Value -> Value -> Bool) -> Value
 compLift comp =
