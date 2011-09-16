@@ -1,8 +1,7 @@
-{-# LANGUAGE NoMonomorphismRestriction #-}
 module Main (main) where
 
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Class (MonadTrans, lift)
+import Control.Monad.IO.Class (MonadIO, liftIO)
 
 import System.Environment (getArgs)
 import System.Console.Haskeline
@@ -27,8 +26,7 @@ replIO = (runProgram defaultBindings . runInputT defaultSettings) repl
 
 
 load :: String -> ProgramEnv ()
--- load path = readFile' path >>= parse' >>= evaluate >> return ()
-load = undefined
+load path = readFile' path >>= parse' >>= evaluate >> return ()
 
 repl :: InputT ProgramEnv ()
 repl = do
@@ -36,6 +34,12 @@ repl = do
   case input of
     Just line -> parse' line >>= evaluate' >>= print' >> repl
     Nothing   -> return ()
+
+
+parse'    :: MonadIO    m => String   -> m Expr
+evaluate' :: MonadTrans t => Expr     -> t ProgramEnv Value
+print'    :: (MonadIO m, Show a) => a -> m ()
+readFile' :: MonadIO    m => FilePath -> m String
 
 parse'    = liftIO . parseStr
 evaluate' = lift   . evaluate
