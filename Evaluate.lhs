@@ -10,7 +10,7 @@ where
 import Control.Monad (liftM, msum)
 import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.State(StateT, get, put, runStateT, evalStateT)
+import Control.Monad.Trans.State.Strict(StateT, get, put, runStateT, evalStateT)
 
 import Control.Monad.CC (CCT, runCCT, Prompt)
 
@@ -19,6 +19,7 @@ import Data.HashTable as HT
        (HashTable, fromList, lookup, update, insert, hashString)
 import Data.IORef
 
+import Utility
 import Parser
 
 data Value = NumVal    Double
