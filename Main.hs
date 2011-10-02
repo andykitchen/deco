@@ -3,6 +3,8 @@ module Main (main) where
 import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 
+import Control.Monad.CC
+
 import System.Environment (getArgs)
 import System.Console.Haskeline
 
@@ -19,29 +21,31 @@ main = do
 
 
 loadIO :: FilePath -> IO ()
-loadIO = runProgram defaultBindings . load
+loadIO path = runProgram defaultBindings (load path)
 
 replIO :: IO ()
-replIO = (runProgram defaultBindings . runInputT defaultSettings) repl
+replIO = (runProgramState defaultBindings . runInputT defaultSettings) repl
 
 
-load :: FilePath -> ProgramEnv ()
+load :: FilePath -> CCT r ProgramState ()
 load path = readFile' path >>= parse' >>= evaluate >> return ()
 
-repl :: InputT ProgramEnv ()
+repl :: InputT ProgramState ()
 repl = do
   input <- getInputLine "> "
   case input of
     Just line -> parse' line >>= evaluate' >>= print' >> repl
     Nothing   -> return ()
 
+evaluate' :: Expr -> InputT ProgramState Value
+evaluate' expr = do
+  let state = runCCT (evaluate expr)
+  lift state
 
 parse'    :: MonadIO    m => String   -> m Expr
-evaluate' :: MonadTrans t => Expr     -> t ProgramEnv Value
 print'    :: (MonadIO m, Show a) => a -> m ()
 readFile' :: MonadIO    m => FilePath -> m String
 
 parse'    = liftIO . parseStr
-evaluate' = lift   . evaluate
 print'    = liftIO . print
 readFile' = liftIO . readFile

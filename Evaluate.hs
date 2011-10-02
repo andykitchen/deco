@@ -1,7 +1,7 @@
 {-# LANGUAGE Rank2Types #-}
 module Evaluate (
        ProgramEnv, ProgramState,
-       evaluate, runProgram, newFrame,
+       evaluate, runProgram, runProgramState, newFrame,
        Value(..), Bindings)
 where
 
@@ -111,6 +111,11 @@ runProgram :: IO Bindings -> ProgramEnv a -> IO a
 runProgram getBindings program = do
            bindings <- getBindings
            evalStateT (runCCT program) bindings
+
+runProgramState :: IO Bindings -> ProgramState a -> IO a
+runProgramState getBindings program = do
+                bindings <- getBindings
+                evalStateT program bindings
 
 evaluateIO :: Expr -> Bindings -> IO (Value, Bindings)
 evaluateIO exp env = runStateT (runCCT (evaluate exp)) env
