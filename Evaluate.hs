@@ -16,12 +16,14 @@ import Control.Monad.CC
 import Data.List (intercalate)
 import Data.HashTable as HT
        (HashTable, fromList, lookup, update, insert, hashString)
+import Data.IORef
 
 import Parser
 
 data Value = NumVal   Double
            | StrVal   String
            | BoolVal  Bool
+           | PromptVal (Prompt () Value)
            | Fun [Symbol] Expr Bindings
            | PrimFun ([Value] -> ProgramEnv Value)
            | Undefined

@@ -8,6 +8,8 @@ import Data.HashTable (fromList, hashString)
 
 import Evaluate
 
+import Unsafe.Coerce
+
 defaultBindings :: IO Bindings
 defaultBindings = sequence
                 [fromList hashString
@@ -66,15 +68,21 @@ showPrim [(NumVal  v)] = (return . StrVal . show) v
 showPrim [(BoolVal v)] = (return . StrVal . show) v
 showPrim _ = return Undefined
 
--- shiftPrim [(PromptVal p), f@(Fun _ _ _)] =
---             shift p $ \k -> 
---               let k' = (\[val] -> k (return val)) in
---               apply f [k']
-shiftPrim = undefined
-resetPrim = undefined
+unsafeCoercePrompt :: Prompt ans a -> Prompt ansx a
+unsafeCoercePrompt = unsafeCoerce
+unsafeCoercePrim :: ([Value] -> CCT ans m a) -> ([Value] -> CCT ansx m a)
+unsafeCoercePrim = unsafeCoerce
 
+shiftPrim [PromptVal p, f@(Fun _ _ _)] =
+            shift (unsafeCoercePrompt p) $ \k -> 
+              let k' = (\[val] -> k (return val)) in
+              apply f [PrimFun (unsafeCoercePrim k')]
+-- shiftPrim = undefined
+
+resetPrim [f@(Fun _ _ _)] =
+          reset (\p -> (apply f [(PromptVal (unsafeCoercePrompt p))]))
+-- resetPrim = undefined
 -- resetPrim [f@(Fun _ _ _)] = reset (resetHandler f)
-
 -- resetHandler :: Value -> Prompt r a -> ProgramEnv Value
 -- resetHandler f p = apply f [(PromptVal p)]
 
