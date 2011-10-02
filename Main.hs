@@ -18,14 +18,14 @@ main = do
        False -> replIO
 
 
-loadIO :: String -> IO ()
+loadIO :: FilePath -> IO ()
 loadIO = runProgram defaultBindings . load
 
 replIO :: IO ()
 replIO = (runProgram defaultBindings . runInputT defaultSettings) repl
 
 
-load :: String -> ProgramEnv ()
+load :: FilePath -> ProgramEnv ()
 load path = readFile' path >>= parse' >>= evaluate >> return ()
 
 repl :: InputT ProgramEnv ()
