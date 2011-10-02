@@ -68,13 +68,31 @@ showPrim [NumVal  v] = (return . StrVal . show) v
 showPrim [BoolVal v] = (return . StrVal . show) v
 showPrim _ = return Undefined
 
-unsafeCoercePrompt :: Prompt ans a -> Prompt ansx a
+unsafeCoercePrompt :: Prompt ans a -> Prompt ans' a
 unsafeCoercePrompt = unsafeCoerce
-unsafeCoercePrim :: ([Value] -> CCT ans m a) -> ([Value] -> CCT ansx m a)
+unsafeCoercePrim :: ([Value] -> CCT ans m a) -> ([Value] -> CCT ans' m a)
 unsafeCoercePrim = unsafeCoerce
+{-
+        Proof sketch for why this is actually safe: right now only
+        runProgram and runProgramState are the only exported functions
+        that can unwrap a ProgramEnv monad and they prevent the
+        bindings from escaping which means that the stored promts
+        cannot be use outside of a context they were created in. This
+        property is very akward to prove using the Haskell type system
+        so we go outside of it.
+
+        The phantom type 'ans' is used to prevent prompts from
+        escaping the contexts they are created in, we override this
+        check by using unsafeCoerce wrapped up to make it slightly
+        more safe.
+
+        As far as I can gather from the GHC documentation because
+        'ans' is an uninstantiated type or phantom type all promts
+        should be representation compatible.
+-}
 
 shiftPrim [PromptVal p, f@(Fun _ _ _)] =
-            shift (unsafeCoercePrompt p) $ \k -> 
+            shift (unsafeCoercePrompt p) $ \k ->
               let k' [val] = k (return val) in
               apply f [PrimFun (unsafeCoercePrim k')]
 

@@ -110,18 +110,24 @@ withBinding f = do
             bindings <- get'
             return (f bindings)
 
-runProgram :: IO Bindings -> ProgramEnv a -> IO a
+runProgram :: IO Bindings -> ProgramEnv () -> IO ()
 runProgram getBindings program = do
            bindings <- getBindings
            evalStateT (runCCT program) bindings
+           return ()
 
-runProgramState :: IO Bindings -> ProgramState a -> IO a
+runProgramState :: IO Bindings -> ProgramState () -> IO ()
 runProgramState getBindings program = do
                 bindings <- getBindings
                 evalStateT program bindings
+                return ()
 
-evaluateIO :: Expr -> Bindings -> IO (Value, Bindings)
-evaluateIO exp env = runStateT (runCCT (evaluate exp)) env
+evaluateIO :: Expr -> Bindings -> IO Value
+evaluateIO exp env = do
+           value <- evalStateT (runCCT (evaluate exp)) env
+           case value of
+             PromptVal _ -> return Undefined
+             _           -> return value
 
 
 evaluate :: Expr -> ProgramEnv Value
