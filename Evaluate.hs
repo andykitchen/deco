@@ -1,7 +1,8 @@
 {-# LANGUAGE Rank2Types #-}
 module Evaluate (
        ProgramEnv, ProgramState,
-       evaluate, runProgram, runProgramState, newFrame,
+       evaluate, apply,
+       runProgram, runProgramState, newFrame,
        Value(..), Bindings)
 where
 
@@ -18,9 +19,9 @@ import Data.HashTable as HT
 
 import Parser
 
-data Value = NumVal  Double
-           | StrVal  String
-           | BoolVal Bool
+data Value = NumVal   Double
+           | StrVal   String
+           | BoolVal  Bool
            | Fun [Symbol] Expr Bindings
            | PrimFun ([Value] -> ProgramEnv Value)
            | Undefined
