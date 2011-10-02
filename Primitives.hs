@@ -71,7 +71,7 @@ showPrim _ = return Undefined
 --               let k' = (\[val] -> k (return val)) in
 --               apply f [k']
 shiftPrim = undefined
-retsetPrim = undefined
+resetPrim = undefined
 
 -- resetPrim [f@(Fun _ _ _)] = reset (resetHandler f)
 
