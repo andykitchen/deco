@@ -21,4 +21,5 @@ Executable deco
     containers >= 0.4 && < 2,
     transformers >= 0.2 && < 2,
     haskeline >= 0.6 && < 2,
-    parsec >= 3 && < 4
+    parsec >= 3 && < 4,
+    CC-delcont >= 0.2 && < 2

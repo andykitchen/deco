@@ -1,11 +1,16 @@
+{-# LANGUAGE Rank2Types #-}
 module Evaluate (
-       ProgramEnv, evaluate, runProgram, newFrame,
+       ProgramEnv, ProgramState,
+       evaluate, runProgram, newFrame,
        Value(..), Bindings)
 where
 
 import Control.Monad (liftM, msum)
+import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.State(StateT, get, put, runStateT, evalStateT)
+
+import Control.Monad.CC
 
 import Data.List (intercalate)
 import Data.HashTable as HT
@@ -41,10 +46,17 @@ instance Ord Value where
   -- TODO create new ord class for partial orderings
   compare _ _ = undefined
 
-type Frame      = HashTable Symbol Value
-type Bindings   = [Frame]
-type ProgramEnv = StateT Bindings IO
-type EnvValue   = ProgramEnv Value
+type Frame        = HashTable Symbol Value
+type Bindings     = [Frame]
+type ProgramState = StateT Bindings IO
+type ProgramEnv a = forall r. CCT r ProgramState a
+type EnvValue     = ProgramEnv Value
+
+get' :: ProgramEnv Bindings
+get' = lift get
+
+put' :: Bindings -> ProgramEnv ()
+put' a = lift (put a)
 
 newFrame :: [(Symbol, Value)] -> ProgramEnv Frame
 lookup'  :: Symbol -> Frame -> ProgramEnv (Maybe Value)
@@ -58,7 +70,7 @@ insert' frame sym val = liftIO (HT.insert frame sym val)
 
 binding :: Symbol -> ProgramEnv Value
 binding sym = do
-        bindings <- get
+        bindings <- get'
         mvals    <- mapM (lookup' sym) bindings
         let mval = msum mvals
         case mval of
@@ -67,7 +79,7 @@ binding sym = do
 
 rebind :: Symbol -> Value -> ProgramEnv Value
 rebind sym val = do
-       bindings <- get
+       bindings <- get'
        bound <- rebindWalk sym val bindings
        case bound of
             False -> insert' (head bindings) sym val
@@ -84,24 +96,25 @@ rebindWalk sym val (frame : stack) = do
 
 stackframe :: Bindings -> ProgramEnv a -> ProgramEnv a
 stackframe frame computation = do
-           base <- get
-           put frame
+           base <- get'
+           put' frame
            val <- computation
-           put base
+           put' base
            return val
 
 withBinding :: (Bindings -> a) -> ProgramEnv a
 withBinding f = do
-            bindings <- get
+            bindings <- get'
             return (f bindings)
 
 runProgram :: IO Bindings -> ProgramEnv a -> IO a
 runProgram getBindings program = do
            bindings <- getBindings
-           evalStateT program bindings
+           evalStateT (runCCT program) bindings
 
 evaluateIO :: Expr -> Bindings -> IO (Value, Bindings)
-evaluateIO exp env = runStateT (evaluate exp) env
+evaluateIO exp env = runStateT (runCCT (evaluate exp)) env
+
 
 evaluate :: Expr -> ProgramEnv Value
 
