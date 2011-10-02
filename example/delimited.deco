@@ -1,3 +1,19 @@
-z = 10 + reset(\p -> 2 + shift(p, \k -> 100 + k(k(3))));
+asserteq = \x y -> {
+    a = string(x) + "\n";
+    b = string(y) + "\n";
+    if(a == b) {
+        print("test case passed: got " + a);
+    } else {
+        print("test case failed: got " + a + "should be" + b);
+    }
+};
 
-print(string(z) + "\n");
+x = 10 + reset(\p -> 2 + shift(p, \k -> 100 + k(k(3))));
+asserteq(x, 117);
+
+y = 10 * reset(\p -> 2 * shift(p, \g -> 5 * shift(p, \f -> 1 + f(1))));
+asserteq(y, 60);
+
+f = \p x -> shift(p, \k -> k(k(x)));
+z = 1 + reset(\p -> 10 + f(p, 100));
+asserteq(z, 121);
