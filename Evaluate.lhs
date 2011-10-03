@@ -19,7 +19,6 @@ import Data.HashTable as HT
        (HashTable, fromList, lookup, update, insert, hashString)
 import Data.IORef
 
-import Utility
 import Parser
 
 data Value = NumVal    Double
