@@ -4,10 +4,11 @@ module Main (main) where
 import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 
-import Control.Monad.CC(runCCT)
+import Control.Monad.CC (runCCT)
 
 import System.Environment (getArgs)
 import System.Console.Haskeline
+  (InputT, runInputT, defaultSettings, getInputLine)
 
 import Parser
 import Evaluate

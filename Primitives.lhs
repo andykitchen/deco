@@ -97,9 +97,10 @@ unsafeCoercePrim = unsafeCoerce
 -}
 
 shiftPrim [PromptVal p, f@(Fun _ _ _)] =
-            shift (unsafeCoercePrompt p) $ \k ->
-              let k' [val] = k (return val) in
-              apply f [PrimFun (unsafeCoercePrim k')]
+            shift (unsafeCoercePrompt p) $
+              \k ->
+                let k' [val] = k (return val) in
+                apply f [PrimFun (unsafeCoercePrim k')]
 
 resetPrim [f@(Fun _ _ _)] =
           reset $ \p -> apply f [PromptVal (unsafeCoercePrompt p)]

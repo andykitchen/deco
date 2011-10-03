@@ -12,7 +12,7 @@ import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.State(StateT, get, put, runStateT, evalStateT)
 
-import Control.Monad.CC(CCT, runCCT, Prompt)
+import Control.Monad.CC (CCT, runCCT, Prompt)
 
 import Data.List (intercalate)
 import Data.HashTable as HT
@@ -21,14 +21,15 @@ import Data.IORef
 
 import Parser
 
-data Value = NumVal   Double
-           | StrVal   String
-           | BoolVal  Bool
+data Value = NumVal    Double
+           | StrVal    String
+           | BoolVal   Bool
            | PromptVal (Prompt () Value)
-           | Fun [Symbol] Expr Bindings
-           | PrimFun ([Value] -> ProgramEnv Value)
+           | Fun       Args Expr Bindings
+           | PrimFun   ([Value] -> ProgramEnv Value)
            | Undefined
 
+type Args         = [Symbol]
 type Frame        = HashTable Symbol Value
 type Bindings     = [Frame]
 type ProgramState = StateT Bindings IO
@@ -87,7 +88,7 @@ evaluate (BinOp op l r) = do
 
 evaluate (Multi exps) = (liftM last . mapM evaluate) exps
 
-evaluate (Lambda args exp) = withBinding (Fun args exp)
+evaluate (Lambda args exp) = withCurrentBindings (Fun args exp)
 
 evaluate (Application fun exps) = do
          fun'  <- evaluate fun
@@ -108,7 +109,7 @@ apply (PrimFun f) exps = f exps
 
 apply (Fun args body closure) exps = do
       frame <- newFrame (zip args exps)
-      stackframe (frame : closure) (evaluate body)
+      withBindings (frame : closure) (evaluate body)
 
 
 
@@ -154,18 +155,18 @@ rebindWalk sym val (frame : stack) = do
                 True  -> return True
                 False -> rebindWalk sym val stack
 
-stackframe :: Bindings -> ProgramEnv a -> ProgramEnv a
-stackframe frame computation = do
+withBindings :: Bindings -> ProgramEnv a -> ProgramEnv a
+withBindings bindings computation = do
            base <- get'
-           put' frame
+           put' bindings
            val <- computation
            put' base
            return val
 
-withBinding :: (Bindings -> a) -> ProgramEnv a
-withBinding f = do
-            bindings <- get'
-            return (f bindings)
+withCurrentBindings :: (Bindings -> a) -> ProgramEnv a
+withCurrentBindings f = do
+           bindings <- get'
+           return (f bindings)
 
 runProgramState :: IO Bindings -> ProgramState () -> IO ()
 runProgramState getBindings program = do
