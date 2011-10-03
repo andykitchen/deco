@@ -3,7 +3,7 @@
 module Primitives(defaultBindings) where
 
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.CC
+import Control.Monad.CC (CCT, Prompt, shift, reset)
 
 import Data.HashTable (fromList, hashString)
 

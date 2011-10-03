@@ -4,7 +4,7 @@ module Main (main) where
 import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 
-import Control.Monad.CC
+import Control.Monad.CC(runCCT)
 
 import System.Environment (getArgs)
 import System.Console.Haskeline
@@ -28,7 +28,7 @@ replIO :: IO ()
 replIO = (runProgramState defaultBindings . runInputT defaultSettings) repl
 
 
-load :: FilePath -> CCT r ProgramState ()
+load :: FilePath -> ProgramEnv ()
 load path = readFile' path >>= parse' >>= evaluate >> return ()
 
 repl :: InputT ProgramState ()

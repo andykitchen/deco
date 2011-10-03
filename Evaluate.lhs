@@ -12,7 +12,7 @@ import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.State(StateT, get, put, runStateT, evalStateT)
 
-import Control.Monad.CC
+import Control.Monad.CC(CCT, runCCT, Prompt)
 
 import Data.List (intercalate)
 import Data.HashTable as HT
@@ -28,6 +28,13 @@ data Value = NumVal   Double
            | Fun [Symbol] Expr Bindings
            | PrimFun ([Value] -> ProgramEnv Value)
            | Undefined
+
+type Frame        = HashTable Symbol Value
+type Bindings     = [Frame]
+type ProgramState = StateT Bindings IO
+type ProgramEnv a = forall r. CCT r ProgramState a
+type EnvValue     = ProgramEnv Value
+
 
 instance Show Value where
   show (BoolVal x)    = show x
@@ -50,16 +57,65 @@ instance Ord Value where
   -- TODO create new ord class for partial orderings
   compare _ _ = undefined
 
-type Frame        = HashTable Symbol Value
-type Bindings     = [Frame]
-type ProgramState = StateT Bindings IO
-type ProgramEnv a = forall r. CCT r ProgramState a
-type EnvValue     = ProgramEnv Value
+runProgram :: IO Bindings -> ProgramEnv () -> IO ()
+runProgram getBindings program = do
+           bindings <- getBindings
+           evalStateT (runCCT program) bindings
+           return ()
+
+evaluate :: Expr -> ProgramEnv Value
+
+evaluate (BoolLit b) = return (BoolVal b)
+evaluate (NumLit  i) = return (NumVal  i)
+evaluate (StrLit  s) = return (StrVal  s)
+evaluate (Ident  id) = binding id
+
+evaluate (UniOp op exp) = do
+         fun <- binding op
+         val <- evaluate exp
+         apply fun [val]
+
+evaluate (BinOp "=" (Ident name) r) = do
+         rhs <- evaluate r
+         rebind name rhs
+
+evaluate (BinOp op l r) = do
+         fun <- binding op
+         lhs <- evaluate l
+         rhs <- evaluate r
+         apply fun [lhs, rhs]
+
+evaluate (Multi exps) = (liftM last . mapM evaluate) exps
+
+evaluate (Lambda args exp) = withBinding (Fun args exp)
+
+evaluate (Application fun exps) = do
+         fun'  <- evaluate fun
+         exps' <- mapM evaluate exps
+         apply fun' exps'
+
+evaluate (If test then' melse') = do
+         val <- evaluate test
+         case val of
+           BoolVal b -> case b of
+             True  -> evaluate then'
+             False -> case melse' of
+               Just else' -> evaluate else'
+               Nothing    -> return Undefined
+
+apply :: Value -> [Value] -> ProgramEnv Value
+apply (PrimFun f) exps = f exps
+
+apply (Fun args body closure) exps = do
+      frame <- newFrame (zip args exps)
+      stackframe (frame : closure) (evaluate body)
+
+
 
 get' :: ProgramEnv Bindings
-get' = lift get
-
 put' :: Bindings -> ProgramEnv ()
+
+get'   = lift get
 put' a = lift (put a)
 
 newFrame :: [(Symbol, Value)] -> ProgramEnv Frame
@@ -111,12 +167,6 @@ withBinding f = do
             bindings <- get'
             return (f bindings)
 
-runProgram :: IO Bindings -> ProgramEnv () -> IO ()
-runProgram getBindings program = do
-           bindings <- getBindings
-           evalStateT (runCCT program) bindings
-           return ()
-
 runProgramState :: IO Bindings -> ProgramState () -> IO ()
 runProgramState getBindings program = do
                 bindings <- getBindings
@@ -130,51 +180,4 @@ evaluateIO exp env = do
              PromptVal _ -> return Undefined
              _           -> return value
 
-
-evaluate :: Expr -> ProgramEnv Value
-
-evaluate (BoolLit b) = return (BoolVal b)
-evaluate (NumLit  i) = return (NumVal  i)
-evaluate (StrLit  s) = return (StrVal  s)
-evaluate (Ident  id) = binding id
-
-evaluate (UniOp op exp) = do
-         fun <- binding op
-         val <- evaluate exp
-         apply fun [val]
-
-evaluate (BinOp "=" (Ident name) r) = do
-         rhs <- evaluate r
-         rebind name rhs
-
-evaluate (BinOp op l r) = do
-         fun <- binding op
-         lhs <- evaluate l
-         rhs <- evaluate r
-         apply fun [lhs, rhs]
-
-evaluate (Multi exps) = (liftM last . mapM evaluate) exps
-
-evaluate (Lambda args exp) = withBinding (Fun args exp)
-
-evaluate (Application fun exps) = do
-         fun'  <- evaluate fun
-         exps' <- mapM evaluate exps
-         apply fun' exps'
-
-evaluate (If test then' melse') = do
-         val <- evaluate test
-         case val of
-           BoolVal b -> case b of
-             True  -> evaluate then'
-             False -> case melse' of
-               Just else' -> evaluate else'
-               Nothing    -> return Undefined
-
-apply :: Value -> [Value] -> ProgramEnv Value
-apply (PrimFun f) exps = f exps
-
-apply (Fun args body closure) exps = do
-      frame <- newFrame (zip args exps)
-      stackframe (frame : closure) (evaluate body)
 \end{code}

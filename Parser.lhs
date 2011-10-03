@@ -12,12 +12,12 @@ import Lexer
 
 type Symbol = String
 
-data Expr = BinOp String Expr Expr
-          | UniOp String Expr
-          | BoolLit Bool
+data Expr = BoolLit Bool
           | NumLit Double
           | StrLit String
           | Ident Symbol
+          | BinOp String Expr Expr
+          | UniOp String Expr
           | Lambda [Symbol] Expr
           | Application Expr [Expr]
           | Multi [Expr]
@@ -36,6 +36,23 @@ if'         :: Parser Expr
 asStrLit = return . StrLit
 asIdent  = return . Ident
 asMulti  = return . Multi
+
+program = do
+    whiteSpace
+    x <- sepEndBy1 expr semi >>= asMulti
+    eof
+    return x
+
+primary  =  try application
+        <|> parens expr
+        <|> multi
+        <|> if'
+        <|> (stringLiteral >>= asStrLit)
+        <|> (identifier    >>= asIdent)
+        <|> boolean
+        <|> number
+        <|> lambda
+        <?> "simple expression"
 
 expr    =  buildExpressionParser table primary
        <?> "expression"
@@ -56,24 +73,13 @@ table   = [[prefix "-"],
 
            [binary "&&" AssocLeft, binary "||" AssocLeft]]
 
-binary  name assoc = Infix  (exprRule name BinOp) assoc
 
+binary  name assoc = Infix  (exprRule name BinOp) assoc
 prefix  name = Prefix  (exprRule name UniOp)
 postfix name = Postfix (exprRule name UniOp)
 
 exprRule name f  =  reservedOp name >> return (f name)
                 <?> "operator"
-
-primary  =  try application
-        <|> parens expr
-        <|> multi
-        <|> if'
-        <|> (stringLiteral >>= asStrLit)
-        <|> (identifier    >>= asIdent)
-        <|> boolean
-        <|> number
-        <|> lambda
-        <?> "simple expression"
 
 boolean  =  (reserved "true"  >> return (BoolLit True))
         <|> (reserved "false" >> return (BoolLit False))
@@ -105,12 +111,6 @@ if' = do
   then' <- multi
   else' <- optionMaybe (reserved "else" >> multi)
   return (If test then' else')
-
-program = do
-    whiteSpace
-    x <- sepEndBy1 expr semi >>= asMulti
-    eof
-    return x
 
 parseStr :: String -> IO Expr
 parseStr = parseStr' program
