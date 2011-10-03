@@ -1,3 +1,4 @@
+\begin{code}
 module Lexer where
 
 import qualified Text.Parsec.Token as P
@@ -41,3 +42,4 @@ naturalOrFloat = P.naturalOrFloat lexer
 reserved   = P.reserved lexer
 reservedOp = P.reservedOp lexer
 stringLiteral = P.stringLiteral lexer
+\end{code}

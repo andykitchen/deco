@@ -1,3 +1,4 @@
+\begin{code}
 module Parser (parseStr, Expr(..), Symbol) where
 
 import Text.Parsec ((<|>), (<?>), try, eof, many1)
@@ -121,3 +122,4 @@ parseStr' p input
                        print err
                        return (NumLit 0)
         Right ast -> return ast
+\end{code}

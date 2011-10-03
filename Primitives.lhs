@@ -1,3 +1,4 @@
+\begin{code}
 {-# LANGUAGE Rank2Types #-}
 module Primitives(defaultBindings) where
 
@@ -119,3 +120,4 @@ logicLift :: (Bool -> Bool -> Bool) -> Value
 logicLift op =
   PrimFun (\[BoolVal a, BoolVal b] -> (return . BoolVal) (a `op` b))
 
+\end{code}

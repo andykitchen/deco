@@ -1,3 +1,4 @@
+\begin{code}
 module Main (main) where
 
 import Control.Monad.Trans.Class (MonadTrans, lift)
@@ -49,3 +50,4 @@ readFile' :: MonadIO    m => FilePath -> m String
 parse'    = liftIO . parseStr
 print'    = liftIO . print
 readFile' = liftIO . readFile
+\end{code}

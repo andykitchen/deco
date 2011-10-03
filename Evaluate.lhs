@@ -1,3 +1,4 @@
+\begin{code}
 {-# LANGUAGE Rank2Types #-}
 module Evaluate (
        ProgramEnv, ProgramState,
@@ -176,3 +177,4 @@ apply (PrimFun f) exps = f exps
 apply (Fun args body closure) exps = do
       frame <- newFrame (zip args exps)
       stackframe (frame : closure) (evaluate body)
+\end{code}
