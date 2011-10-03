@@ -64,8 +64,12 @@ getLinePrim [] = do
            line <- liftIO getLine
            return (StrVal line)
 
-showPrim [NumVal  v] = (return . StrVal . show) v
-showPrim [BoolVal v] = (return . StrVal . show) v
+asStrVal :: Show a => a -> ProgramEnv Value
+asStrVal = return . StrVal . show
+
+showPrim [NumVal  v] = asStrVal v
+showPrim [StrVal  v] = asStrVal v
+showPrim [BoolVal v] = asStrVal v
 showPrim _ = return Undefined
 
 unsafeCoercePrompt :: Prompt ans a -> Prompt ans' a
