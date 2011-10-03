@@ -1,0 +1,7 @@
+n = 0;
+f = reset(\p -> {x = shift(p, \k -> k); n = n + x});
+
+print(string(f(1)) + "\n");
+print(string(f(2)) + "\n");
+print(string(f(3)) + "\n");
+print("total: " + string(n) + "\n");
