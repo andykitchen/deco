@@ -1,10 +1,8 @@
 \begin{code}
 {-# LANGUAGE Rank2Types #-}
 module Evaluate (
-       ProgramEnv, ProgramState,
-       evaluate, apply,
-       runProgram, runProgramState, newFrame,
-       Value(..), Bindings)
+       ProgramEnv, evaluate, apply, runProgram,
+       newFrame, Value(..), Bindings)
 where
 
 import Control.Monad (liftM, msum)
@@ -167,12 +165,6 @@ withCurrentBindings :: (Bindings -> a) -> ProgramEnv a
 withCurrentBindings f = do
            bindings <- get'
            return (f bindings)
-
-runProgramState :: IO Bindings -> ProgramState () -> IO ()
-runProgramState getBindings program = do
-                bindings <- getBindings
-                evalStateT program bindings
-                return ()
 
 evaluateIO :: Expr -> Bindings -> IO Value
 evaluateIO exp env = do

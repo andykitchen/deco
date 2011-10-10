@@ -4,7 +4,7 @@ asserteq = \x y -> {
     if(x == y) {
         print("test case passed: got " + a);
     } else {
-        print("test case failed: got " + a + "should be" + b);
+        print("test case failed: got " + a + " should be " + b);
     }
 };
 
@@ -19,7 +19,7 @@ z = 1 + reset(\p -> 10 + f(p, 100));
 asserteq(z, 121);
 
 u = reset(\p -> {
-    x = shift(p, \f -> shift(p, \g -> "a" + f("b")));
+    x = shift(p, \f -> shift(p, \g -> g("a" + f("b"))));
     shift(p, \h -> x);
 });
 asserteq(u, "ab");
