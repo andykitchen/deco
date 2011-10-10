@@ -2,6 +2,7 @@
 
 \usepackage{parskip}
 \usepackage{url}
+\usepackage{amssymb}
 
 \usepackage{listings}
 \lstloadlanguages{Haskell}
@@ -21,31 +22,56 @@
                {\ .}{{$\circ$}}2 {\ .\ }{{$\circ$}}2
                {>>}{{>>}}2 {>>=}{{>>=}}2
                {|}{{$\mid$}}1
+               {forall}{{$\forall$}}2
+               {>>=}{{$\gg\!=$}}2 {>>}{{$\gg$}}2
+               {()}{{$\square$}}2
     }
 
-\title{Professional Computing Practice: Assignment 1}
-\author{Andy Kitchen (s3203582)}
+\newcommand{\ignore}[1]{}
+\newcommand{\function}[1]{\texttt{#1}}
+\newcommand{\type}[1]{\texttt{#1}}
 
-\date{2011-08-02}
+\title{Technical Report: Implementing \& Designing the Deco Programming Language}
+\author{Andy Kitchen}
+
+\date{2011-10-03}
 
 \begin{document}
 
 \maketitle
 
-\section{Main}
-\input{../Main.lhs}
+\section{Overview}
 
-\section{Lexer}
-\input{../Lexer.lhs}
+The programming language Deco is a impure functional programming language.
+this report discusses the design process of Deco and it's practical
+implementation in Haskell.
 
-\section{Parser}
-\input{../Parser.lhs}
+The task of building an interpreter for an impure~functional~language inside
+a~pure~one is an interesting task. Putting great stress on the abstraction
+used to represent state and interaction with the outside world.
 
-\section{Evaluator}
+While implementing Deco several high-level and distinctive features of
+functional programming have been used. Including monad~transformers,
+parser~combinators, rank-2~types and delimited~continuations. They have also
+been made to work in unison, leading to an interesting synthesis. High-level
+features such as these are often described from a very theoretical perspective
+and in isolation. This report aims to present the theoretical and the
+practical together; and explore the interactions of different features.
+
+\pagebreak
 \input{../Evaluate.lhs}
 
-\section{Primitives}
-\input{../Primitives.lhs}
+% \section{Main}
+% \input{../Main.lhs}
+%
+% \section{Lexer}
+% \input{../Lexer.lhs}
+%
+% \section{Parser}
+% \input{../Parser.lhs}
+%
+% \section{Primitives}
+% \input{../Primitives.lhs}
 
 %\nocite{*}
 %\bibliographystyle{plain}

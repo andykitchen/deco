@@ -1,8 +1,12 @@
+\section{Expression Evaluation}
+
+\ignore{
 \begin{code}
 {-# LANGUAGE Rank2Types #-}
 module Evaluate (
-       ProgramEnv, evaluate, apply, runProgram,
-       newFrame, Value(..), Bindings)
+         ProgramEnv, Value(..), Bindings,
+         runProgram, evaluate, apply
+       )
 where
 
 import Control.Monad (liftM, msum)
@@ -18,50 +22,129 @@ import Data.HashTable as HT
 import Data.IORef
 
 import Parser
+\end{code}
+}
 
+\subsection{Values}
+
+We use ADT for the value type in our nested language:
+
+\vspace{5 mm}
+\begin{code}
 data Value = NumVal    Double
            | StrVal    String
            | BoolVal   Bool
-           | PromptVal (Prompt () Value)
            | Fun       Args Expr Bindings
            | PrimFun   ([Value] -> ProgramEnv Value)
+           | PromptVal (Prompt () Value)
            | Undefined
 
-type Args         = [Symbol]
-type Frame        = HashTable Symbol Value
-type Bindings     = [Frame]
+type Args     = [Symbol]
+type Bindings = [Frame]
+
+type Frame    = HashTable Symbol Value
+\end{code}
+
+First we have three simple constructors for primtive values.
+
+\type{Fun} is for functions defined inside the language.  The
+constructor fields are the list of argument names, the body of the
+function and the static link that records the function's closure.  In
+this implementation we use a spaghetti-stack to represent the lexical
+environment of a function. Because in our language all values are
+reference types, we use a stack of \type{Hashtable} which is a
+by-reference data structure that can only be accessed inside the
+\type{IO} monad.
+
+\type{PrimFun} represents a primitive function that is implemented in
+haskell, because the language is very dynamic, all functions are
+varardic so a primtive function takes a list of values and importantly
+returns a value inside the \type{ProgramEnv} monad. Which is discussed
+slightly later.
+
+\type{PromptVal} is rather special, it is used to represented
+delimited continuation prompts and is discussed with more detail in
+\ref{discussion:delcont}.
+
+Finally we have an \type{Undefined} constructor to represent undefined
+values within the language as distinct from haskell's own concept of
+undefined values.
+
+\vspace{5 mm} % force page break
+\subsection{The Program Environment Monad}
+
+\begin{code}
+type ProgramEnv a = forall ans. CCT ans ProgramState a
 type ProgramState = StateT Bindings IO
-type ProgramEnv a = forall r. CCT r ProgramState a
-type EnvValue     = ProgramEnv Value
+\end{code}
+
+The program environment monad (\type{ProgramEnv}) is the main vehicle
+for representing the impure evaluator cleanly in haskell. It therefore
+has a lot of functionality. Fortunatly its complexity is managable
+because it is built out of well seperated components.
+
+The \type{ProgramEnv} monad is built by composing monad transformers,
+which are covered in more depth in \ref{discussion:monadtrans}.  There
+are two transformers layered on our stack the \type{StateT} monad and
+the \type{CCT} monad.
+
+\begin{itemize}
+
+\item The \type{IO} monad forms the base of our stack. It is required
+  for communication with the outside world.
+
+\item The \type{StateT} transformer allows us to read and write a global shared
+  state. This state is used to hold the current evaluation scope used
+  for variable lookup.
+
+\item The \type{CCT} transformer is the delimited continuation monad
+  transformer, by running our \function{evaluate} function under this
+  transformer we can supply primitives to the interpreted language
+  that allow it to manipulate the control flow of its evaluator and so
+  therefore its own control flow.
+
+\end{itemize}
 
 
-instance Show Value where
-  show (BoolVal x)    = show x
-  show (NumVal  x)    = show x
-  show (StrVal  x)    = show x
-  show (Fun args _ _) = "<function(" ++ (intercalate "," args) ++ ")>"
-  show (PrimFun _)    = "<primitive function>"
-  show Undefined      = "<undefined>"
+\subsubsection{Unwinding the Program Monad}
+The \function{runProgram} function unwinds the \type{ProgramEnv} monad
+stack to yield an \type{IO} `action' that represents the execution of
+a given program.
 
-instance Eq Value where
-  BoolVal a == BoolVal b   =   a == b
-  NumVal  a == NumVal  b   =   a == b
-  StrVal  a == StrVal  b   =   a == b
-  _         == _           =   False
-
-instance Ord Value where
-  compare (BoolVal a) (BoolVal b)  =  compare a b
-  compare (NumVal  a) (NumVal  b)  =  compare a b
-  compare (StrVal  a) (StrVal  b)  =  compare a b
-  -- TODO create new ord class for partial orderings
-  compare _ _ = undefined
-
+\begin{code}
 runProgram :: IO Bindings -> ProgramEnv () -> IO ()
 runProgram getBindings program = do
            bindings <- getBindings
            evalStateT (runCCT program) bindings
            return ()
+\end{code}
 
+One can see \function{evalStateT} takes an extra argument when
+unwinding the \type{StateT} transformer which is the initial state, it
+is used to supply the initial variable bindings (see Primitives
+\ref{module:Primitives}).
+
+The other thing to note is the expanded type of \function{runProgram}
+once it has already been partially applied to a binding:
+
+\begin{code}%
+        (forall ans. CCT ans ProgramState ()) -> IO ()
+\end{code}
+
+This is a rank-2 type because the quantifier is limited in scope to
+the left hand side of the arrow. The use of a uninstantiated type
+variable to prevent values escaping a monaic context is covered in
+\ref{discussion:rank2}.
+
+Also, interpreting the type, we can see that the function operates on
+monads wrapped around the unit type; values of which convey no
+information.  This fits with out intuitive understanding, because it
+means that the only non-trivial functions of this type operate on the
+monaic wrapping only. This is an important part of the correctness of
+code in \ref{discussion:unsafecast}.
+
+\subsection{The Evaluation Function}
+\begin{code}
 evaluate :: Expr -> ProgramEnv Value
 
 evaluate (BoolLit b) = return (BoolVal b)
@@ -174,3 +257,28 @@ evaluateIO exp env = do
              _           -> return value
 
 \end{code}
+
+\ignore{% Instance declerations for Value
+\begin{code}
+instance Show Value where
+  show (BoolVal x)    = show x
+  show (NumVal  x)    = show x
+  show (StrVal  x)    = show x
+  show (Fun args _ _) = "<function(" ++ (intercalate "," args) ++ ")>"
+  show (PrimFun _)    = "<primitive function>"
+  show Undefined      = "<undefined>"
+
+instance Eq Value where
+  BoolVal a == BoolVal b   =   a == b
+  NumVal  a == NumVal  b   =   a == b
+  StrVal  a == StrVal  b   =   a == b
+  _         == _           =   False
+
+instance Ord Value where
+  compare (BoolVal a) (BoolVal b)  =  compare a b
+  compare (NumVal  a) (NumVal  b)  =  compare a b
+  compare (StrVal  a) (StrVal  b)  =  compare a b
+  -- TODO create new ord class for partial orderings
+  compare _ _ = undefined
+\end{code}
+}
