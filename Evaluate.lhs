@@ -1,5 +1,3 @@
-\section{Expression Evaluation}
-
 \ignore{
 \begin{code}
 {-# LANGUAGE Rank2Types #-}
@@ -19,7 +17,6 @@ import Control.Monad.CC (CCT, runCCT, Prompt)
 import Data.List (intercalate)
 import Data.HashTable as HT
        (HashTable, fromList, lookup, update, insert, hashString)
-import Data.IORef
 
 import Parser
 \end{code}
@@ -64,7 +61,7 @@ slightly later.
 
 \type{PromptVal} is rather special, it is used to represented
 delimited continuation prompts and is discussed with more detail in
-\ref{discussion:delcont}.
+section \ref{discussion:delcont}.
 
 Finally we have an \type{Undefined} constructor to represent undefined
 values within the language as distinct from haskell's own concept of
@@ -84,7 +81,7 @@ has a lot of functionality. Fortunatly its complexity is managable
 because it is built out of well seperated components.
 
 The \type{ProgramEnv} monad is built by composing monad transformers,
-which are covered in more depth in \ref{discussion:monadtrans}.  There
+which are covered in more depth in section \ref{discussion:monadtrans}.  There
 are two transformers layered on our stack the \type{StateT} monad and
 the \type{CCT} monad.
 
@@ -121,8 +118,8 @@ runProgram getBindings program = do
 
 One can see \function{evalStateT} takes an extra argument when
 unwinding the \type{StateT} transformer which is the initial state, it
-is used to supply the initial variable bindings (see Primitives
-\ref{module:Primitives}).
+is used to supply the initial variable bindings (see Primitives module
+in source code).
 
 The other thing to note is the expanded type of \function{runProgram}
 once it has already been partially applied to a binding:
@@ -133,17 +130,22 @@ once it has already been partially applied to a binding:
 
 This is a rank-2 type because the quantifier is limited in scope to
 the left hand side of the arrow. The use of a uninstantiated type
-variable to prevent values escaping a monaic context is covered in
-\ref{discussion:rank2}.
+variable to prevent values escaping a monadic context is covered in
+section \ref{discussion:rank2}.
 
 Also, interpreting the type, we can see that the function operates on
 monads wrapped around the unit type; values of which convey no
 information.  This fits with out intuitive understanding, because it
 means that the only non-trivial functions of this type operate on the
 monaic wrapping only. This is an important part of the correctness of
-code in \ref{discussion:unsafecast}.
+code in section \ref{discussion:unsafecast}.
 
 \subsection{The Evaluation Function}
+
+The evaluation functions is straight forward in it's implementation:
+deconstructing the program's abstract syntax tree and producing appropriate
+actions inside the \type{ProgramEnv} monad.
+
 \begin{code}
 evaluate :: Expr -> ProgramEnv Value
 
@@ -191,8 +193,12 @@ apply (PrimFun f) exps = f exps
 apply (Fun args body closure) exps = do
       frame <- newFrame (zip args exps)
       withBindings (frame : closure) (evaluate body)
+\end{code}
 
 
+\ignore{
+\begin{code}
+-- Utility functions
 
 get' :: ProgramEnv Bindings
 put' :: Bindings -> ProgramEnv ()
@@ -256,10 +262,8 @@ evaluateIO exp env = do
              PromptVal _ -> return Undefined
              _           -> return value
 
-\end{code}
+-- Instance declerations for Value
 
-\ignore{% Instance declerations for Value
-\begin{code}
 instance Show Value where
   show (BoolVal x)    = show x
   show (NumVal  x)    = show x
