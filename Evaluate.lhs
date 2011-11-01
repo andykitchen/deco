@@ -59,9 +59,9 @@ varardic so a primtive function takes a list of values and importantly
 returns a value inside the \type{ProgramEnv} monad. Which is discussed
 slightly later.
 
-\type{PromptVal} is rather special, it is used to represented
-delimited continuation prompts and is discussed with more detail in
-section \ref{discussion:delcont}.
+\type{PromptVal} is rather special, it is used to represented delimited
+continuation prompts. Prompts are discussed with more detail in section
+\ref{discussion:delcont}.
 
 Finally we have an \type{Undefined} constructor to represent undefined
 values within the language as distinct from haskell's own concept of
@@ -137,8 +137,8 @@ Also, interpreting the type, we can see that the function operates on
 monads wrapped around the unit type; values of which convey no
 information.  This fits with out intuitive understanding, because it
 means that the only non-trivial functions of this type operate on the
-monaic wrapping only. This is an important part of the correctness of
-code in section \ref{discussion:unsafecast}.
+monaic wrapping only. This is an interesting part of the correctness of
+the Deco code, discussed more in section \ref{discussion:unsafecast}.
 
 \subsection{The Evaluation Function}
 

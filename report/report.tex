@@ -87,8 +87,8 @@ test case passed: got "ab"
 \section{Monad Transformers}
 \subsection{Monads}
 To do input and output in a pure functional language one must silo it inside
-some kind of abstraction. So that side effects alter the semantics of the
-language in a controlled and manageable way.
+some kind of abstraction so that side effects alter the semantics of the
+language in a controlled and manageable way \cite{PeytonJones:2001}.
 
 In Haskell the abstraction used is monads. Impure values are wrapped inside a
 particular monad called the \type{IO} monad. While the theory of monads is
@@ -103,7 +103,7 @@ a binding operation in Haskell called `\function{>>=}' which specialised for
 the IO monad has type: `\type{IO a -> (a -> IO b) -> IO b}'. So to operate on
 the value inside, one must supply a function that will be called by an unknown
 mechanism with the unwrapped value. It must also promise to return a value
-that is wrapped up again; indicating that the functions output is also
+that is wrapped up again; indicating that the function's output is also
 influenced by the outside world.
 
 While the \type{IO} monad in Haskell is magical, because it cannot
@@ -138,15 +138,17 @@ transformer on different levels of the stack providing more functionality.
 \subsection{ProgramEnv Monad}
 
 In Deco a stack of monad transformers is used to represent the program
-environment. In a way the program environment monad indicates that the
-wrapped value has been influenced by the stateful execution of Deco code.
+environment, simplified but similar to techniques in \cite{Liang:Unknown1}. In
+a way the program environment monad indicates that the wrapped value has been
+influenced by the stateful execution of Deco code.
 
 \section{Delimited Continuations}
 \label{discussion:delcont}
 
 Delimited continuations are a variant of classical continuations. However they
 are much more useful in application programming because their effects are more
-local. They can also be called composable continuations because of this.
+local \cite{Oleg:2011}. They can also be called composable continuations
+because of this.
 
 In a stack based computation model a classical continuation captures the
 entire stack and program counter. When the continuation is invoked the current
@@ -206,8 +208,8 @@ formal proof:
 \label{discussion:rank2}
 
 Rank-2 types are types that have a universal quantifier limited in scope to
-the left hand side of a function arrow. They are not natively available in
-Haskell but are available as an extension in GHC.
+the left hand side of a function arrow \cite{Wikibook:Haskell}. They are not
+natively available in Haskell but are available as an extension in GHC.
 
 Rank-2 types are used by the \type{ST} monad and the \type{CC} monad. this
 allows certain values to be created inside the monad but prevented from
@@ -230,16 +232,15 @@ with type \type{a -> b} (for all \type{a} and \type{b}).
 
 In Deco, `prompts' created by the \type{CCT} monad cannot escape. However they
 can appear inside the state of a lower \type{StateT} monad, because they can
-be stored inside deco variables. In certain situations these values could
+be stored inside Deco variables. In certain situations these values could
 escape. However because the \function{runProgram} function evaluates to
 \type{IO ()} and this is the only provided way to unwrap the \type{ProgramEnv}
-monad, escape can never happen. Therefor a judiciously used
+monad, escape can never happen. Therefore a judiciously used
 \function{unsafeCoerce} must be placed into the type of the Deco primitives
 that produce prompt values.
 
 
 
-%\nocite{*}
-%\bibliographystyle{plain}
-%\bibliography{pcp}
+\bibliographystyle{plain}
+\bibliography{deco}
 \end{document}
