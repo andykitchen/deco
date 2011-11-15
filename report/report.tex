@@ -162,45 +162,6 @@ available later. This means that delimited continuations have more `local'
 effects. Delimited continuations naturally control only a small part of
 program execution.
 
-\subsection{Implementation in terms of Classical Continuations}
-Delimited continuations can be represented using classical continuations. What
-follows is a scheme program that implements delimited continuations in terms
-of \function{call/cc}. Because scheme has a formal semantics, this is also a
-formal proof:
-
-\begin{verbatim}
-(define ret-points '())
-
-(define (push-ret ret)
-  (set! ret-points (cons ret ret-points)))
-
-(define (pop-ret)
-  (let ((ret (car ret-points)))
-    (set! ret-points (cdr ret-points))
-    ret))
-
-(define (reset* thunk)
-  (call/cc (lambda (ret-point)
-    (push-ret ret-point)
-    (let ((val (thunk))
-          (ret (pop-ret)))
-      (ret val)))))
-
-(define (shift* handler)
-  (call/cc (lambda (shift-cont)
-    (let ((val (handler (lambda args
-                 (reset* (lambda () (apply shift-cont args)))))))
-      ((pop-ret) val)))))
-
-(define-syntax reset
-  (syntax-rules ()
-    ((_ ?e ?f ...) (reset* (lambda () ?e ?f ...)))))
-
-(define-syntax shift
-  (syntax-rules ()
-    ((_ ?k ?e ?f ...) (shift* (lambda (?k) ?e ?f ...)))))
-\end{verbatim}
-
 \section{Rank-2 Types}
 \label{discussion:rank2}
 
@@ -236,7 +197,7 @@ monad, escape can never happen. Therefore a judiciously used
 \function{unsafeCoerce} must be placed into the type of the Deco primitives
 that produce prompt values.
 
-\section{Deco Architecture}
+\section{System Architecture}
 
 \input{../Evaluate.lhs}
 
