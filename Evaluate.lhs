@@ -42,7 +42,7 @@ type Bindings = [Frame]
 type Frame    = HashTable Symbol Value
 \end{code}
 
-First we have three simple constructors for primtive values.
+First we have three simple constructors for primitive values.
 
 \type{Fun} is for functions defined inside the language.  The
 constructor fields are the list of argument names, the body of the
@@ -55,7 +55,7 @@ by-reference data structure that can only be accessed inside the
 
 \type{PrimFun} represents a primitive function that is implemented in
 haskell, because the language is very dynamic, all functions are
-varardic so a primtive function takes a list of values and importantly
+var-ardic so a primitive function takes a list of values, and importantly,
 returns a value inside the \type{ProgramEnv} monad. Which is discussed
 slightly later.
 
@@ -64,7 +64,7 @@ continuation prompts. Prompts are discussed with more detail in section
 \ref{discussion:delcont}.
 
 Finally we have an \type{Undefined} constructor to represent undefined
-values within the language as distinct from haskell's own concept of
+values within the language as distinct from Haskell's own concept of
 undefined values.
 
 \vspace{5 mm} % force page break
@@ -76,8 +76,8 @@ type ProgramState = StateT Bindings IO
 \end{code}
 
 The program environment monad (\type{ProgramEnv}) is the main vehicle
-for representing the impure evaluator cleanly in haskell. It therefore
-has a lot of functionality. Fortunatly its complexity is managable
+for representing the impure evaluator cleanly in Haskell. It therefore
+has a lot of functionality. Fortunately its complexity is manageable
 because it is built out of well seperated components.
 
 The \type{ProgramEnv} monad is built by composing monad transformers,
@@ -116,7 +116,7 @@ runProgram getBindings program = do
            return ()
 \end{code}
 
-One can see \function{evalStateT} takes an extra argument when
+One can see that \function{evalStateT} takes an extra argument when
 unwinding the \type{StateT} transformer which is the initial state, it
 is used to supply the initial variable bindings (see Primitives module
 in source code).
@@ -129,20 +129,20 @@ once it has already been partially applied to a binding:
 \end{code}
 
 This is a rank-2 type because the quantifier is limited in scope to
-the left hand side of the arrow. The use of a uninstantiated type
+the left hand side of the arrow. The use of an uninstantiated type
 variable to prevent values escaping a monadic context is covered in
 section \ref{discussion:rank2}.
 
 Also, interpreting the type, we can see that the function operates on
 monads wrapped around the unit type; values of which convey no
-information.  This fits with out intuitive understanding, because it
+information.  This fits with our intuitive understanding, because it
 means that the only non-trivial functions of this type operate on the
 monaic wrapping only. This is an interesting part of the correctness of
 the Deco code, discussed more in section \ref{discussion:unsafecast}.
 
 \subsection{The Evaluation Function}
 
-The evaluation functions is straight forward in it's implementation:
+The evaluation functions is straight forward in its implementation:
 deconstructing the program's abstract syntax tree and producing appropriate
 actions inside the \type{ProgramEnv} monad.
 
