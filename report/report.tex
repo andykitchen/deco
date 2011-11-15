@@ -82,9 +82,11 @@ test case passed: got "ab"
 
 \section{Monads \& Monad Transformers}
 \subsection{Monads}
-To do input and output in a pure functional language one must put it into
-some kind of abstraction so that side effects alter the semantics of the
-language in a controlled and manageable way \cite{PeytonJones:2001}.
+
+To do input and output in a pure functional language one must use some kind of
+abstraction. The purpose of the abstraction is to control the way that side
+effects and execution order alter the semantics of the language
+\cite{PeytonJones:2001}.
 
 In Haskell monads are used to handle input and output. Impure values are
 wrapped inside a particular monad called the \type{IO} monad. While the theory
