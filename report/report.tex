@@ -3,6 +3,7 @@
 \usepackage{parskip}
 \usepackage{url}
 \usepackage{amssymb}
+\usepackage{verbatim}
 
 \usepackage{listings}
 \lstloadlanguages{Haskell}
@@ -79,6 +80,38 @@ test case passed: got 60.0
 test case passed: got 121.0
 test case passed: got "ab"
 \end{verbatim}
+
+
+\subsection{Some example programs}
+\subsubsection{Imperative}
+Deco supports imperative programming, it is impure:
+\begin{verbatim}
+# The language allows variables to be rewritten
+
+str = "Hello";
+print(str); # Prints hello
+
+str = " World";
+print(str); # Prints world
+\end{verbatim}
+
+In this example the str variable is first defined
+to have the value ``Hello''. Then redefined to have
+the value `` World''.
+
+\subsubsection{Closures}
+Deco has closures and first-class functions:
+\verbatiminput{../example/closure.deco}
+
+In this example, we create a function that returns another function. Our
+functions generates adders that add a given number to their argument.
+
+We redefine a variable named x after the adders are created. However the
+binding that the adders use for x is the one that was in scope at the time
+adder was created. Also we create 2 adders and one can see that they also use
+different values.
+
+
 
 \section{Monads \& Monad Transformers}
 \subsection{Monads}
@@ -204,10 +237,14 @@ that produce prompt values.
 \item[ADT] Algebraic Data Type.
 \item[closure]
   The object created to represent a function who's free variables have been
-  bound inside its lexical scope.
+  lexically bound inside a certain scope.
 \item[Curry-Howard Isomorphism]
   A correspondence between logic and types.
   Discovered by Haskell Curry and logician William Alvin Howard.
+\item[first-class functions] In a language with first-class functions.
+  Functions are treated like any other value. They can be used as arguments
+  and can be returned as results; they can also be declared inside other
+  functions.
 \item[GHC] Glasgow Haskell Compiler
 \item[impure] (in the context of programming languages)
   Functions in the language may have side-effects or
@@ -223,8 +260,8 @@ that produce prompt values.
 \item[variadic] Taking a variable number of arguments.
 \end{description}
 
-%\section{System Architecture}
-%\input{../Evaluate.lhs}
+\section{System Architecture}
+\input{../Evaluate.lhs}
 
 \bibliographystyle{plain}
 \bibliography{deco}
