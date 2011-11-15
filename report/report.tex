@@ -197,9 +197,32 @@ monad, escape can never happen. Therefore a judiciously used
 \function{unsafeCoerce} must be placed into the type of the Deco primitives
 that produce prompt values.
 
-\section{System Architecture}
+\section{Glossary}
+\begin{description}
+\item[ADT] Algebraic Data Type.
+\item[closure]
+  The object created to represent a function who's free variables have been
+  bound inside its lexical scope.
+\item[Curry-Howard Isomorphism]
+  A correspondence between logic and types.
+  Discovered by Haskell Curry and logician William Alvin Howard.
+\item[GHC] Glasgow Haskell Compiler
+\item[impure] (in the context of programming languages)
+  Functions in the language may have side-effects or
+  return different values for the same arguments
+\item[pure] (in the context of programming languages)
+  All functions in the language have no side effects
+  and are referentially transparent.
+\item[referentially transparent] A referentially transparent function will always
+  evaluate to the same value for the same arguments.
+\item[System-F]
+  A typed $\lambda$-calculus with universal quantification over types.\\
+  discovered by Jean-Yves Girard
+\item[variadic] Taking a variable number of arguments.
+\end{description}
 
-\input{../Evaluate.lhs}
+%\section{System Architecture}
+%\input{../Evaluate.lhs}
 
 \bibliographystyle{plain}
 \bibliography{deco}

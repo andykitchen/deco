@@ -55,7 +55,7 @@ by-reference data structure that can only be accessed inside the
 
 \type{PrimFun} represents a primitive function that is implemented in
 haskell, because the language is very dynamic, all functions are
-var-ardic so a primitive function takes a list of values, and importantly,
+variadic so a primitive function takes a list of values, and importantly,
 returns a value inside the \type{ProgramEnv} monad. Which is discussed
 slightly later.
 
