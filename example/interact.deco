@@ -8,4 +8,7 @@ age  = read();
 
 print("Hello ");
 print(name);
+print(". You are ");
+print(age);
+print(" years old.");
 print("\n");

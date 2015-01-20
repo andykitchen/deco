@@ -1,6 +1,6 @@
 \ignore{
 \begin{code}
-{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE RankNTypes #-}
 module Evaluate (
          ProgramEnv, Value(..), Bindings,
          runProgram, evaluate, apply

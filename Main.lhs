@@ -1,4 +1,5 @@
 \begin{code}
+{-# LANGUAGE RankNTypes #-}
 module Main (main) where
 
 import Control.Monad.Trans.Class (MonadTrans, lift)

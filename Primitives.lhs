@@ -78,10 +78,10 @@ unsafeCoercePrompt = unsafeCoerce
 unsafeCoercePrim :: ([Value] -> CCT ans m a) -> ([Value] -> CCT ans' m a)
 unsafeCoercePrim = unsafeCoerce
 {-
-        Proof sketch for why this is actually safe: right now only
+        Proof sketch for why this is actually safe: right now
         runProgram and runProgramState are the only exported functions
         that can unwrap a ProgramEnv monad and they prevent the
-        bindings from escaping which means that the stored promts
+        bindings from escaping which means that the stored prompts
         cannot be use outside of a context they were created in. This
         property is very akward to prove using the Haskell type system
         so we go outside of it.
